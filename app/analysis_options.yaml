@@ -1,0 +1,64 @@
+# Strict static analysis. `flutter analyze` must report zero issues.
+# Do not add `// ignore` comments without a comment explaining why.
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Promote the most dangerous hints to errors.
+    unawaited_futures: error
+    discarded_futures: error
+    must_be_immutable: error
+    invalid_annotation_target: error
+  exclude:
+    # Generated code (drift in lib/data/). Generated files are not allowed in
+    # lib/core/; test/architecture/ enforces that.
+    - "**/*.g.dart"
+    - build/**
+    - android/**
+    - ios/**
+    - windows/**
+    - macos/**
+    - linux/**
+
+linter:
+  rules:
+    # Types and inference.
+    - always_declare_return_types
+    - avoid_dynamic_calls
+    - avoid_types_on_closure_parameters
+    - type_annotate_public_apis
+    # Immutability and equality.
+    - avoid_equals_and_hash_code_on_mutable_classes
+    - prefer_final_fields
+    - prefer_final_in_for_each
+    - prefer_final_locals
+    - test_types_in_equals
+    # Async safety.
+    - avoid_void_async
+    - cancel_subscriptions
+    - close_sinks
+    - discarded_futures
+    - unawaited_futures
+    # Error handling.
+    - only_throw_errors
+    - throw_in_finally
+    # Imports.
+    - always_use_package_imports
+    - directives_ordering
+    # Style and clarity.
+    - avoid_positional_boolean_parameters
+    - avoid_redundant_argument_values
+    - comment_references
+    - literal_only_boolean_expressions
+    - no_adjacent_strings_in_list
+    - prefer_const_constructors
+    - prefer_const_declarations
+    - prefer_single_quotes
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - use_named_constants
+    - use_super_parameters

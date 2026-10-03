@@ -1,0 +1,30 @@
+name: file_organizer
+description: "Scans user files, removes duplicates, sorts files into a fixed folder template and can undo every cleanup."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+  # Typed SQLite for the local database (docs/architecture.md, section 14);
+  # used only in lib/data/.
+  drift: ^2.35.1
+  # @immutable for the domain model (pure Dart, already pinned by Flutter).
+  meta: ^1.18.3
+
+dev_dependencies:
+  # Code generation for drift (lib/data/ only).
+  build_runner: ^2.16.1
+  drift_dev: ^2.35.1
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  # In-memory SQLite for the drift repository tests.
+  sqlite3: ^3.7.0
+
+flutter:
+  uses-material-design: true

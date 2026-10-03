@@ -1,0 +1,16 @@
+# drift code generation runs on lib/data/ only: the core has no generated
+# code (see CLAUDE.md).
+targets:
+  $default:
+    builders:
+      drift_dev:
+        generate_for:
+          - lib/data/**
+        options:
+          databases:
+            app: lib/data/db/app_database.dart
+          schema_dir: drift_schemas/
+          test_dir: test/data/migrations/
+      drift_dev:preparing_builder:
+        generate_for:
+          - lib/data/**
