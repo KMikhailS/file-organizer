@@ -15,6 +15,10 @@ dependencies:
   drift: ^2.35.1
   # @immutable for the domain model (pure Dart, already pinned by Flutter).
   meta: ^1.18.3
+  # renameat2, mkdir, rmdir and errno from the system C library
+  # (docs/stage2_android.md, section 12); used only in lib/platform/ and the
+  # A.5 experiment.
+  ffi: ^2.2.0
 
 dev_dependencies:
   # Code generation for drift (lib/data/ only).
