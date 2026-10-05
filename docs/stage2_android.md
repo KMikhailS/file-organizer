@@ -3,7 +3,7 @@
 Расположение кода: `app/lib/platform/`, `app/lib/state/`, `app/lib/ui/`, `app/lib/l10n/`, Kotlin — `app/android/`, контракт Dart ↔ Kotlin — `app/pigeons/`; изменения ядра — `app/lib/core/` и `app/lib/data/`.
 Ядро этапа 1: `docs/core_modules.md`. Итоги этапа 1: `docs/stage1_report.md`. Desktop (перенесён на этап 3): `docs/stage3_desktop.md`. Общая архитектура: `docs/architecture.md`.
 
-> **Статус:** решения раздела 1 ждут подтверждения. Решение A.5 принимается по итогам задачи 2 (эксперимент).
+> **Статус:** решения A.1–A.8 подтверждены пользователем (2026-10-04); A.5 — направление подтверждено, конкретный механизм фиксируется по итогам задачи 2 (эксперимент). Задача 1 выполнена (CI проверен локально: remote на GitHub пока нет); следующая — задача 2.
 
 Порядок этапов изменён: этап 2 — Android, этап 3 — desktop (Windows, macOS, Linux). Решение по Apple (песочница macOS, App Store) отложено до этапа публикации.
 
@@ -204,7 +204,12 @@ Material 3, раскладка для телефона (планшет — та 
 | `state` | `core`, `data`, `platform`, Riverpod |
 | `ui` | `core/model`, `state`, Flutter; **не** `data` и не `platform` |
 
-В POSIX- и Android-адаптерах запрещены `File.rename`, `Directory.rename`, `delete` вне `purgeQuarantined` / `removeEmptyDir` — тест исходного кода `lib/platform/`.
+В POSIX- и Android-адаптерах запрещены `File.rename`, `Directory.rename`, `delete` вне `purgeQuarantined` / `removeEmptyDir` — тест исходного кода `lib/platform/` (`test/architecture/platform_source_test.dart`). Подробнее:
+- `rename` / `renameSync` и функции libc `rename`, `renameat` — нигде (перемещение — только механизмом A.5);
+- удаление (`delete` / `deleteSync`, libc `unlink`, `unlinkat`, `remove`, `rmdir`, `truncate`, `ftruncate`) — только в теле `purgeQuarantined` / `removeEmptyDir`, только прямым вызовом и никогда рекурсивно;
+- `Process` (внешние программы) и `syscall` — нигде: они обходят все проверки выше.
+
+Каждый файл `lib/` принадлежит ровно одному слою (`core`, `data`, `platform`, `state`, `ui`, `l10n`, `main.dart`); файл вне слоёв — ошибка (`test/architecture/layer_dependencies_test.dart`). Уточнения таблицы: `platform` может импортировать из Flutter только `foundation.dart` и `services.dart` (среда выполнения кода Pigeon); `ui` — также `flutter_riverpod`, `flutter_localizations`, `intl` и `l10n`; `l10n` (код `gen-l10n`) — Flutter, `flutter_localizations`, `intl`; `main.dart` — `ui`, `state`, Flutter, Riverpod. Новые пакеты (например, `drift_flutter`) добавляются в белые списки теми задачами, которым они нужны.
 
 ---
 
@@ -229,6 +234,15 @@ Kotlin-зависимости — только AndroidX из шаблона Flut
 - JDK 17 и Android SDK (cmdline-tools, platform-tools, build-tools, платформа последней версии, образы эмулятора Android 11, 14 и последней версии) — в домашней папке, без `sudo`; ускорение эмулятора через KVM (есть).
 - Телефон пользователя — по USB с отладкой (`adb`).
 - `flutter doctor` без ошибок для Android.
+
+### 13.1. Фактическое окружение (задача 1)
+- Flutter 3.47.6 (Dart 3.13.5) — `~/development/flutter`; в `PATH` оболочки не прописан.
+- Android Studio — `~/development/android-studio`; SDK — `~/development/android-sdk` (`flutter config --android-sdk`).
+- JDK — JetBrains Runtime 25 из Android Studio (`flutter config --jdk-dir ~/development/android-studio/jbr`) вместо отдельного JDK 17: подходит для AGP 9.1 / Gradle 9.3.1; сборка по-прежнему целится в Java 17 (`build.gradle.kts`).
+- Пакеты SDK: cmdline-tools 23.0, platform-tools, build-tools 36.0.0 и 37.0.0, платформы 36 (докачала первая сборка), 36.1 и 37.0; NDK 28.2.13676358 (версия Flutter, докачала первая сборка) и 30.0.16248370; эмулятор 37.2. Первая сборка debug APK — около 9 минут.
+- AVD (Pixel 6, x86_64, KVM): `fo_api30` (AOSP), `fo_api34` (AOSP), `fo_api37` (Google Play — `adb root` недоступен, `appops` работает и без него).
+- Трафик идёт через VPN (~200 КБ/с) — большие загрузки делает пользователь.
+- **Известная ошибка Flutter 3.47.6:** `flutter doctor` пишет «Android license status unknown». `sdkmanager` из cmdline-tools 23 на `--licenses` отвечает «option is no longer needed» и сразу завершается; Flutter пишет в его stdin, получает «Broken pipe» и считает статус неизвестным. Лицензия принята (`android-sdk/licenses/android-sdk-license`); критерий готовности — сборка APK и запуск эмуляторов.
 
 ---
 
