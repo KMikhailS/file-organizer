@@ -19,6 +19,7 @@ final class Source {
     required this.id,
     required this.kind,
     required this.displayName,
+    required this.location,
     required this.capabilities,
     required this.enabled,
   });
@@ -29,6 +30,12 @@ final class Source {
 
   /// Name shown in the UI.
   final String displayName;
+
+  /// Where the source is, as only its adapter understands it: the root folder
+  /// for full storage access and desktop folders, later a SAF tree URI or an
+  /// iOS bookmark. The core never reads it. Empty for sources migrated from
+  /// database schema version 1 (unknown; the source has to be added again).
+  final String location;
 
   final SourceCapabilities capabilities;
 
@@ -41,13 +48,16 @@ final class Source {
       other.id == id &&
       other.kind == kind &&
       other.displayName == displayName &&
+      other.location == location &&
       other.capabilities == capabilities &&
       other.enabled == enabled;
 
   @override
-  int get hashCode => Object.hash(id, kind, displayName, capabilities, enabled);
+  int get hashCode =>
+      Object.hash(id, kind, displayName, location, capabilities, enabled);
 
   @override
   String toString() =>
-      'Source($id, $kind, "$displayName", enabled: $enabled, $capabilities)';
+      'Source($id, $kind, "$displayName", "$location", enabled: $enabled, '
+      '$capabilities)';
 }

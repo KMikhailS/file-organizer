@@ -1,6 +1,7 @@
 import 'package:file_organizer/core/model/category.dart';
 import 'package:file_organizer/core/model/classification.dart';
 import 'package:file_organizer/core/model/file_entry.dart';
+import 'package:file_organizer/core/model/layout_folder_names.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:meta/meta.dart';
 
@@ -84,28 +85,7 @@ final class LayoutTemplate {
     int Function(DateTime utc)? yearOf,
   }) : folderNames = Map.unmodifiable(folderNames),
        _yearOf = yearOf ?? _utcYear {
-    final seen = <String>{};
-    for (final category in Category.values) {
-      final name = folderNames[category];
-      if (category == Category.unresolved) {
-        if (name != null) {
-          throw ArgumentError('unresolved files have no folder');
-        }
-        continue;
-      }
-      if (name == null) {
-        throw ArgumentError('no folder name for ${category.name}');
-      }
-      if (name.isEmpty ||
-          name.contains('/') ||
-          name.startsWith('.') ||
-          LogicalPath.problemWith(name) != null) {
-        throw ArgumentError.value(name, category.name, 'not a folder name');
-      }
-      if (!seen.add(name.toLowerCase())) {
-        throw ArgumentError.value(name, category.name, 'used twice');
-      }
-    }
+    checkLayoutFolderNames(folderNames);
   }
 
   /// Categories whose files go into year subfolders.

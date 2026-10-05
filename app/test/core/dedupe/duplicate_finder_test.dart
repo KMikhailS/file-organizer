@@ -370,6 +370,44 @@ void main() {
     });
   });
 
+  test('a cancel token stops inside a file without a result', () async {
+    const block = InMemoryFileSource.hashBlockSize;
+    final fs = InMemoryFileSource()
+      ..addFile('a1', text: 'a')
+      ..addFile('a2', text: 'a')
+      ..addFile('big1', bytes: List.filled(block * 4, 1))
+      ..addFile('big2', bytes: List.filled(block * 4, 1));
+    final zones = await scanned(fs);
+    final token = CancelToken();
+    final blocks = <String>[];
+    fs.onHashBlock = (path, n) {
+      blocks.add('$path#$n');
+      if (path.value == 'big1') {
+        token.cancel();
+      }
+    };
+
+    final events = await finder.find(fs, zones, cancel: token).toList();
+    expect(events.whereType<DedupeCompleted>(), isEmpty);
+    expect(blocks, ['a1#0', 'a2#0', 'big1#0'], reason: 'stops in big1');
+    final cached = [
+      for (final e in await index.bySource(fs.sourceId))
+        if (e.fullHash != null || e.partialHash != null) e.path.value,
+    ];
+    expect(cached, ['a1', 'a2'], reason: 'big1 is not marked as hashed');
+
+    fs.onHashBlock = null;
+    final result = await find(fs, zones);
+    expect(result.skipped, isEmpty, reason: 'the cancel was no file problem');
+    expect(
+      result.groups.map((g) => g.files.map((f) => f.path.value).toList()),
+      [
+        ['a1', 'a2'],
+        ['big1', 'big2'],
+      ],
+    );
+  });
+
   test('the result is deterministic', () async {
     Future<DedupeCompleted> fresh() async {
       index = InMemoryFileIndexRepository();

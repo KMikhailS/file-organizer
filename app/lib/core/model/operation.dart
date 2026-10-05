@@ -1,6 +1,8 @@
 import 'package:file_organizer/core/model/fingerprint.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
+import 'package:file_organizer/core/model/operation_reason.dart';
 import 'package:file_organizer/core/model/operation_status.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/planned_operation.dart';
@@ -33,11 +35,11 @@ final class Operation {
     required LogicalPath? fromPath,
     required LogicalPath? toPath,
     required Fingerprint? fingerprint,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required OperationStatus status,
     QuarantineRef? quarantineRef,
-    String? error,
+    OperationProblem? error,
     DateTime? executedAt,
     DateTime? revertedAt,
   }) {
@@ -146,8 +148,8 @@ final class Operation {
   /// Set once a quarantine operation is done.
   final QuarantineRef? quarantineRef;
 
-  /// Human-readable reason, for the report.
-  final String reason;
+  /// Why the plan had this operation; the UI turns it into text.
+  final OperationReason reason;
 
   /// Plan group, for the report and partial undo.
   final String groupKey;
@@ -155,7 +157,7 @@ final class Operation {
   final OperationStatus status;
 
   /// What went wrong; set for failed, skipped and revertSkipped.
-  final String? error;
+  final OperationProblem? error;
 
   /// When the operation left [OperationStatus.pending], in UTC.
   final DateTime? executedAt;
@@ -168,12 +170,16 @@ final class Operation {
       _to(OperationStatus.done, executedAt: at, quarantineRef: quarantineRef);
 
   /// pending → failed.
-  Operation markFailed({required DateTime at, required String error}) =>
-      _to(OperationStatus.failed, executedAt: at, error: error);
+  Operation markFailed({
+    required DateTime at,
+    required OperationProblem error,
+  }) => _to(OperationStatus.failed, executedAt: at, error: error);
 
   /// pending → skipped.
-  Operation markSkipped({required DateTime at, required String reason}) =>
-      _to(OperationStatus.skipped, executedAt: at, error: reason);
+  Operation markSkipped({
+    required DateTime at,
+    required OperationProblem error,
+  }) => _to(OperationStatus.skipped, executedAt: at, error: error);
 
   /// done or revertSkipped → reverted.
   Operation markReverted({required DateTime at}) => _to(
@@ -184,18 +190,18 @@ final class Operation {
   );
 
   /// done or revertSkipped → revertSkipped.
-  Operation markRevertSkipped({required String reason}) => _to(
+  Operation markRevertSkipped({required OperationProblem error}) => _to(
     OperationStatus.revertSkipped,
     executedAt: executedAt,
     quarantineRef: quarantineRef,
-    error: reason,
+    error: error,
   );
 
   Operation _to(
     OperationStatus next, {
     required DateTime? executedAt,
     QuarantineRef? quarantineRef,
-    String? error,
+    OperationProblem? error,
     DateTime? revertedAt,
   }) {
     if (!status.canTransitionTo(next)) {

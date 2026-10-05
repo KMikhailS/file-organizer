@@ -13,6 +13,7 @@ import 'package:file_organizer/core/model/plan.dart';
 import 'package:file_organizer/core/model/session_status.dart';
 import 'package:file_organizer/core/planner/plan_outcome.dart' as planning;
 import 'package:file_organizer/core/planner/planner.dart';
+import 'package:file_organizer/core/ports/cancel_token.dart';
 import 'package:file_organizer/core/ports/classifier.dart';
 import 'package:file_organizer/core/ports/clock.dart';
 import 'package:file_organizer/core/ports/file_index_repository.dart';
@@ -128,6 +129,9 @@ final class CleanupWorkflow {
   bool _initialized = false;
   bool _commandRunning = false;
   bool _cancelRequested = false;
+
+  /// Stops hashing inside a file when [cancel] is called during analysis.
+  CancelToken _hashing = CancelToken();
   ExecutionRun? _execution;
   UndoRun? _undoRun;
 
@@ -255,6 +259,7 @@ final class CleanupWorkflow {
       return;
     }
     _cancelRequested = true;
+    _hashing.cancel();
     _execution?.cancel();
     _undoRun?.cancel();
   }
@@ -285,6 +290,7 @@ final class CleanupWorkflow {
     }
     _commandRunning = true;
     _cancelRequested = false;
+    _hashing = CancelToken();
     try {
       await body();
     } on Exception catch (e) {
@@ -419,7 +425,7 @@ final class CleanupWorkflow {
       );
       await for (final event in DuplicateFinder(
         index: _repos.index,
-      ).find(fs, zones)) {
+      ).find(fs, zones, cancel: _hashing)) {
         switch (event) {
           case DedupeProgress(:final sizesDone, :final sizesTotal):
             _emit(
@@ -440,6 +446,11 @@ final class CleanupWorkflow {
         }
       }
 
+      if (_cancelRequested) {
+        // The finder stopped inside a file without a result.
+        _emit(const Idle());
+        return;
+      }
       switch (await planner.plan(
         source: fs,
         files: await _repos.index.bySource(source.id),

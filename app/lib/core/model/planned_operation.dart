@@ -1,6 +1,7 @@
 import 'package:file_organizer/core/model/fingerprint.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation_reason.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:meta/meta.dart';
 
@@ -14,7 +15,7 @@ final class PlannedOperation {
   factory PlannedOperation.mkdir({
     required SourceId sourceId,
     required LogicalPath path,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required bool approved,
   }) => PlannedOperation._checked(
@@ -34,7 +35,7 @@ final class PlannedOperation {
     required LogicalPath from,
     required LogicalPath to,
     required Fingerprint fingerprint,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required bool approved,
   }) => PlannedOperation._checked(
@@ -53,7 +54,7 @@ final class PlannedOperation {
     required SourceId sourceId,
     required LogicalPath path,
     required Fingerprint fingerprint,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required bool approved,
   }) => PlannedOperation._checked(
@@ -72,7 +73,7 @@ final class PlannedOperation {
     required SourceId sourceId,
     required LogicalPath path,
     required Fingerprint fingerprint,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required bool approved,
   }) => PlannedOperation._checked(
@@ -92,7 +93,7 @@ final class PlannedOperation {
     required LogicalPath? fromPath,
     required LogicalPath? toPath,
     required Fingerprint? fingerprint,
-    required String reason,
+    required OperationReason reason,
     required String groupKey,
     required bool approved,
   }) {
@@ -138,8 +139,8 @@ final class PlannedOperation {
   /// The file as indexed at planning time; `null` for [OperationType.mkdir].
   final Fingerprint? fingerprint;
 
-  /// Human-readable reason, shown in the plan.
-  final String reason;
+  /// Why the plan has this operation; the UI turns it into text.
+  final OperationReason reason;
 
   /// Key of the plan group (for the UI and partial undo).
   final String groupKey;

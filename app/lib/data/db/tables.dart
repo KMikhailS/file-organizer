@@ -5,13 +5,18 @@ import 'package:drift/drift.dart';
 //   seconds would lose the microseconds fingerprints compare);
 // - enums are TEXT holding the Dart enum name, so adding a value never
 //   shifts stored ones; renaming a value is a schema change;
-// - paths are TEXT with the default BINARY collation: case-sensitive keys.
+// - paths are TEXT with the default BINARY collation: case-sensitive keys;
+// - operation reasons and problems are TEXT holding JSON with a `code`
+//   (see `reason_codec.dart`); renaming a code is a schema change.
 
 @DataClassName('SourceRow')
 class Sources extends Table {
   TextColumn get id => text()();
   TextColumn get kind => text()();
   TextColumn get displayName => text()();
+
+  /// Added in schema version 2; empty for sources of version 1.
+  TextColumn get location => text().withDefault(const Constant(''))();
   BoolColumn get canMove => boolean()();
   BoolColumn get canMkdir => boolean()();
   BoolColumn get canQuarantine => boolean()();

@@ -4,6 +4,7 @@ import 'package:file_organizer/core/model/classification.dart';
 import 'package:file_organizer/core/model/duplicate_group.dart';
 import 'package:file_organizer/core/model/file_entry.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation_reason.dart';
 import 'package:file_organizer/core/model/plan.dart';
 import 'package:file_organizer/core/model/planned_operation.dart';
 import 'package:file_organizer/core/model/zone.dart';
@@ -86,7 +87,7 @@ final class Planner {
         if (zones.zoneOfFile(extra.path) != Zone.chaos) {
           continue;
         }
-        final reason = 'duplicate of ${group.keeper.path}';
+        final reason = DuplicateOf(group.keeper.path);
         if (capabilities.canQuarantine) {
           duplicateOps.add(
             PlannedOperation.quarantine(
@@ -184,7 +185,7 @@ final class Planner {
           PlannedOperation.mkdir(
             sourceId: sourceId,
             path: f,
-            reason: 'folder for ${folder.value}',
+            reason: FolderFor(folder),
             groupKey: group,
             approved: true,
           ),
@@ -201,7 +202,7 @@ final class Planner {
             from: file.path,
             to: names.claim(folder, file.name),
             fingerprint: file.fingerprint,
-            reason: classification.reason,
+            reason: Classified(classification.reason),
             groupKey: group,
             approved: true,
           ),

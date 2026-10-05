@@ -4,6 +4,7 @@ import 'package:file_organizer/core/layout/name_allocator.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/operation.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/operation_status.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/session_stats.dart';
@@ -187,9 +188,9 @@ final class UndoService {
             _reverted(op),
           FileFailure(error: FileError(kind: FileErrorKind.notEmpty)) => _skip(
             op,
-            'folder is not empty',
+            const FolderNotEmpty(),
           ),
-          FileFailure(:final error) => _skip(op, _describe(error)),
+          FileFailure(:final error) => _skip(op, _problem(error)),
         };
 
       case OperationType.addToAlbum:
@@ -197,7 +198,7 @@ final class UndoService {
           FileSuccess() => _reverted(op),
           FileFailure(error: FileError(kind: FileErrorKind.notFound)) =>
             _reverted(op),
-          FileFailure(:final error) => _skip(op, _describe(error)),
+          FileFailure(:final error) => _skip(op, _problem(error)),
         };
 
       case OperationType.move:
@@ -215,13 +216,13 @@ final class UndoService {
         }
         return switch (await source.move(at, destination)) {
           FileSuccess() => _reverted(op, destination),
-          FileFailure(:final error) => _skip(op, _describe(error)),
+          FileFailure(:final error) => _skip(op, _problem(error)),
         };
 
       case OperationType.quarantine:
         final ref = op.quarantineRef;
         if (ref == null) {
-          return _skip(op, 'no quarantine reference was recorded');
+          return _skip(op, const CannotRestore());
         }
         final (destination, destinationProblem) = await _destination(
           source,
@@ -234,17 +235,17 @@ final class UndoService {
           FileSuccess() => _reverted(op, destination),
           FileFailure(error: FileError(kind: FileErrorKind.notFound)) => _skip(
             op,
-            'the quarantine was purged',
+            const QuarantinePurged(),
           ),
           FileFailure(error: FileError(kind: FileErrorKind.unsupported)) =>
-            _skip(op, 'this source cannot restore from its quarantine'),
-          FileFailure(:final error) => _skip(op, _describe(error)),
+            _skip(op, const CannotRestore()),
+          FileFailure(:final error) => _skip(op, _problem(error)),
         };
     }
   }
 
   /// Why the moved file cannot be moved back, or `null`.
-  Future<String?> _checkMoved(
+  Future<OperationProblem?> _checkMoved(
     FileSource source,
     Operation op,
     LogicalPath at,
@@ -252,16 +253,16 @@ final class UndoService {
     switch (await source.stat(at)) {
       case FileFailure(:final error):
         return error.kind == FileErrorKind.notFound
-            ? 'the file is not where the cleanup put it'
-            : 'cannot check the file: ${_describe(error)}';
+            ? const NotWhereCleanupPutIt()
+            : _problem(error);
       case FileSuccess(value: final stat):
         if (!stat.isFile) {
-          return 'not a file any more';
+          return const NotAFile();
         }
         final expected = op.fingerprint!;
         if (stat.size != expected.size ||
             stat.modifiedAt != expected.modifiedAt) {
-          return 'the file changed since the cleanup';
+          return const FileChanged();
         }
         return null;
     }
@@ -270,7 +271,7 @@ final class UndoService {
   /// Where a file goes back to: [original], or a "restored" name next to it
   /// if that is taken. Missing parent folders are created. Returns the path,
   /// or `null` and the problem.
-  Future<(LogicalPath?, String?)> _destination(
+  Future<(LogicalPath?, OperationProblem?)> _destination(
     FileSource source,
     LogicalPath original,
   ) async {
@@ -283,13 +284,13 @@ final class UndoService {
         case FileSuccess(value: final stat) when stat.isDirectory:
           continue;
         case FileSuccess():
-          return (null, 'folder $folder is a file now');
+          return (null, FolderReplacedByFile(folder));
         case FileFailure(error: FileError(kind: FileErrorKind.notFound)):
           if (await source.mkdir(folder) case FileFailure(:final error)) {
-            return (null, 'cannot create folder $folder: ${_describe(error)}');
+            return (null, _problem(error, path: folder));
           }
         case FileFailure(:final error):
-          return (null, 'cannot check folder $folder: ${_describe(error)}');
+          return (null, _problem(error, path: folder));
       }
     }
 
@@ -307,10 +308,10 @@ final class UndoService {
         case FileSuccess(value: true):
           continue;
         case FileFailure(:final error):
-          return (null, 'cannot check $candidate: ${_describe(error)}');
+          return (null, _problem(error, path: candidate));
       }
     }
-    return (null, 'no free name next to $original');
+    return (null, NoFreeName(original));
   }
 
   UndoEntry _reverted(Operation op, [LogicalPath? destination]) => UndoEntry(
@@ -320,12 +321,11 @@ final class UndoService {
         : null,
   );
 
-  UndoEntry _skip(Operation op, String reason) =>
-      UndoEntry(op.markRevertSkipped(reason: reason));
+  UndoEntry _skip(Operation op, OperationProblem problem) =>
+      UndoEntry(op.markRevertSkipped(error: problem));
 
-  static String _describe(FileError error) => error.message == null
-      ? error.kind.name
-      : '${error.kind.name}: ${error.message}';
+  static OperationProblem _problem(FileError error, {LogicalPath? path}) =>
+      FileSystemError(error.kind, path: path, detail: error.message);
 }
 
 final class _CancelFlag {

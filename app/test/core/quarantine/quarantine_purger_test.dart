@@ -40,7 +40,7 @@ void main() {
       expect(fs.quarantined, isEmpty);
       final op = await quarantineOp();
       expect(op.status, OperationStatus.revertSkipped);
-      expect(op.error, QuarantinePurger.purgedReason);
+      expect(op.error, const QuarantinePurged());
       expect(op.quarantineRef, isNotNull, reason: 'kept for the record');
     });
 
@@ -98,7 +98,7 @@ void main() {
     final undo = await harness.undo(session.id);
     final op = await quarantineOp();
     expect(op.status, OperationStatus.revertSkipped);
-    expect(op.error, 'the quarantine was purged');
+    expect(op.error, const QuarantinePurged());
     expect(undo.session.status, SessionStatus.partiallyReverted);
     expect(
       fs.isFile('Download/notes.txt'),

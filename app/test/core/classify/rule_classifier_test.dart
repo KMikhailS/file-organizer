@@ -215,12 +215,54 @@ void main() {
     final pdf = classifier.classifyFile(fileEntry('a.pdf'));
     expect(pdf.origin, ClassificationOrigin.rule);
     expect(pdf.confidence, 1);
-    expect(pdf.reason, 'extension .pdf');
+    expect(pdf.reason, const ByExtension('pdf'));
     expect(pdf.subfolder, isNull);
 
     final unknown = classifier.classifyFile(fileEntry('a.xyz'));
     expect(unknown.confidence, 0);
-    expect(unknown.reason, 'unknown extension .xyz');
+    expect(unknown.reason, const UnknownExtension('xyz'));
+  });
+
+  group('reason codes', () {
+    final withRule = RuleClassifier(
+      userRules: [
+        ClassificationRule(
+          id: 'cad',
+          category: Category.documents,
+          extensions: const {'dwg'},
+        ),
+      ],
+    );
+    final cases = <String, (FileEntry, ClassificationReason)>{
+      'user rule': (fileEntry('plan.dwg'), const ByUserRule('cad')),
+      'extension, in lower case': (
+        fileEntry('Report.PDF'),
+        const ByExtension('pdf'),
+      ),
+      'screenshot name': (
+        fileEntry('Pictures/Screenshot_2024.png'),
+        const ScreenshotName(),
+      ),
+      'screenshots folder': (
+        fileEntry('Pictures/Screenshots/a.png'),
+        const ScreenshotFolder(),
+      ),
+      'unknown extension': (fileEntry('a.xyz'), const UnknownExtension('xyz')),
+      'no extension': (fileEntry('Makefile'), const NoExtension()),
+      'screenshot name on a non-image': (
+        fileEntry('Screenshot.pdf'),
+        const ScreenshotNameNotImage('pdf'),
+      ),
+      'MIME type of another family': (
+        fileEntry('a.pdf', mimeType: 'image/png'),
+        const MimeMismatch(mimeType: 'image/png', extension: 'pdf'),
+      ),
+    };
+    for (final MapEntry(key: name, value: (file, reason)) in cases.entries) {
+      test(name, () {
+        expect(withRule.classifyFile(file).reason, reason);
+      });
+    }
   });
 
   test('classify keeps the order of requests', () async {

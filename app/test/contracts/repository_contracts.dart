@@ -2,7 +2,9 @@ import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../support/layout_fixtures.dart';
 import '../support/model_fixtures.dart';
+import '../support/reason_fixtures.dart';
 
 /// Behavior every [SourceRepository] implementation must have.
 void sourceRepositoryContract(Future<SourceRepository> Function() create) {
@@ -13,6 +15,7 @@ void sourceRepositoryContract(Future<SourceRepository> Function() create) {
     id: SourceId(id),
     kind: SourceKind.desktopFolder,
     displayName: 'Source $id',
+    location: '/storage/$id',
     capabilities: const SourceCapabilities(canMove: true),
     enabled: enabled,
   );
@@ -313,6 +316,39 @@ void operationJournalContract(Future<OperationJournal> Function() create) {
     expect(await journal.byId(const OperationId('nope')), isNull);
   });
 
+  test('keeps every reason and problem code', () async {
+    final reasons = [
+      ...operationReasons(),
+      for (final r in classificationReasons()) Classified(r),
+    ];
+    final problems = operationProblems();
+    for (var i = 0; i < reasons.length; i++) {
+      final op = Operation.pending(
+        id: OperationId('r$i'),
+        sessionId: s1,
+        seq: i,
+        planned: PlannedOperation.move(
+          sourceId: testSource,
+          from: LogicalPath('a$i.pdf'),
+          to: LogicalPath('Documents/a$i.pdf'),
+          fingerprint: fingerprint(),
+          reason: reasons[i],
+          groupKey: 'g',
+          approved: true,
+        ),
+      );
+      await journal.append(op);
+      expect((await journal.byId(op.id))!.reason, reasons[i]);
+    }
+    for (var i = 0; i < problems.length; i++) {
+      final op = pending('p$i', session: s2, seq: i);
+      await journal.append(op);
+      final skipped = op.markSkipped(at: at, error: problems[i]);
+      await journal.update(skipped);
+      expect((await journal.byId(op.id))!.error, problems[i]);
+    }
+  });
+
   test('appends only pending operations', () async {
     final done = pending('o1').markDone(at: at);
     await expectLater(journal.append(done), throwsStateError);
@@ -334,7 +370,9 @@ void operationJournalContract(Future<OperationJournal> Function() create) {
     await journal.update(done);
     expect(await journal.byId(op.id), done);
 
-    final skipped = done.markRevertSkipped(reason: 'target occupied');
+    final skipped = done.markRevertSkipped(
+      error: const FileSystemError(FileErrorKind.targetExists),
+    );
     await journal.update(skipped);
     final reverted = skipped.markReverted(at: later);
     await journal.update(reverted);
@@ -357,7 +395,7 @@ void operationJournalContract(Future<OperationJournal> Function() create) {
     // A stale copy cannot bring a done operation back or fail it.
     await expectLater(journal.update(op), throwsStateError);
     await expectLater(
-      journal.update(op.markFailed(at: at, error: 'e')),
+      journal.update(op.markFailed(at: at, error: const FileGone())),
       throwsStateError,
     );
     // The same status twice is not a transition either.
@@ -613,5 +651,19 @@ void settingsRepositoryContract(Future<SettingsRepository> Function() create) {
     );
     await repo.save(Settings(quarantineRetention: const Duration(days: 90)));
     expect((await repo.load()).quarantineRetention, const Duration(days: 90));
+  });
+
+  test('saves the folder names and the language, and clears them', () async {
+    final full = Settings(
+      quarantineRetention: const Duration(days: 14),
+      layoutFolderNames: russianFolderNames,
+      uiLocale: 'ru',
+    );
+    await repo.save(full);
+    expect(await repo.load(), full);
+
+    final cleared = Settings(quarantineRetention: const Duration(days: 14));
+    await repo.save(cleared);
+    expect(await repo.load(), cleared);
   });
 }

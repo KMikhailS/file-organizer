@@ -63,6 +63,14 @@ class InMemoryFileSource implements FileSource {
   /// Every port call, in order.
   final List<FsCall> calls = [];
 
+  /// Size of the blocks hashing reads; the cancel token is checked before
+  /// each block.
+  static const int hashBlockSize = 64 * 1024;
+
+  /// Called after each block a hash call reads (`block` counts from 0), so a
+  /// test can cancel a token in the middle of a file.
+  void Function(LogicalPath path, int block)? onHashBlock;
+
   final Map<String, _Node> _nodes = {};
   final Map<String, _Node> _quarantine = {};
   final Map<String, LogicalPath> _album = {};
@@ -335,16 +343,49 @@ class InMemoryFileSource implements FileSource {
       });
 
   @override
-  Future<FileResult<String>> partialHash(LogicalPath path) => _call(
+  Future<FileResult<String>> partialHash(
+    LogicalPath path, {
+    CancelToken? cancel,
+  }) => _call(
     FsCall(FsMethod.partialHash, path: path),
-    () => _readFile(path).map((node) => fakePartialHash(node.bytes)),
+    () => _hash(path, cancel, partial: true),
   );
 
   @override
-  Future<FileResult<String>> fullHash(LogicalPath path) => _call(
+  Future<FileResult<String>> fullHash(
+    LogicalPath path, {
+    CancelToken? cancel,
+  }) => _call(
     FsCall(FsMethod.fullHash, path: path),
-    () => _readFile(path).map((node) => fakeFullHash(node.bytes)),
+    () => _hash(path, cancel, partial: false),
   );
+
+  /// Reads the file in [hashBlockSize] blocks (the partial hash only the
+  /// first and last one), checking [cancel] before each block.
+  FileResult<String> _hash(
+    LogicalPath path,
+    CancelToken? cancel, {
+    required bool partial,
+  }) {
+    final Uint8List bytes;
+    switch (_readFile(path)) {
+      case FileFailure(:final error):
+        return FileFailure(error);
+      case FileSuccess(:final value):
+        bytes = value.bytes;
+    }
+    final blocks = bytes.isEmpty ? 1 : (bytes.length / hashBlockSize).ceil();
+    final toRead = partial && blocks > 2
+        ? [0, blocks - 1]
+        : [for (var i = 0; i < blocks; i++) i];
+    for (final block in toRead) {
+      if (cancel?.isCancelled ?? false) {
+        return FileFailure.of(FileErrorKind.cancelled);
+      }
+      onHashBlock?.call(path, block);
+    }
+    return FileSuccess(partial ? fakePartialHash(bytes) : fakeFullHash(bytes));
+  }
 
   @override
   Future<FileResult<void>> mkdir(LogicalPath path) =>
@@ -726,11 +767,4 @@ final class _Rule {
     return (call.path != null && key(call.path!) == path) ||
         (call.to != null && key(call.to!) == path);
   }
-}
-
-extension on FileResult<_Node> {
-  FileResult<T> map<T>(T Function(_Node node) f) => switch (this) {
-    FileSuccess(:final value) => FileSuccess(f(value)),
-    FileFailure(:final error) => FileFailure(error),
-  };
 }

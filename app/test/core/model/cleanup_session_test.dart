@@ -250,16 +250,18 @@ void main() {
         pending(plannedMkdir('Documents')),
         pending(plannedMkdir('Photos')).markDone(at: at),
         pending(plannedMove('a.pdf', 'Documents/a.pdf')).markDone(at: at),
-        pending(plannedMove('b.pdf', 'Documents/b.pdf'))
-            .markFailed(at: at, error: 'locked'),
+        pending(plannedMove('b.pdf', 'Documents/b.pdf')).markFailed(
+          at: at,
+          error: const FileSystemError(FileErrorKind.locked),
+        ),
         pending(plannedMove('c.pdf', 'Documents/c.pdf'))
-            .markSkipped(at: at, reason: 'changed'),
+            .markSkipped(at: at, error: const FileChanged()),
         // Still out of the way: counted in removedBytes.
         pending(plannedQuarantine('d (1).pdf', size: 100))
             .markDone(at: at, quarantineRef: QuarantineRef('q1')),
         pending(plannedQuarantine('e (1).pdf', size: 20))
             .markDone(at: at, quarantineRef: QuarantineRef('q2'))
-            .markRevertSkipped(reason: 'purged'),
+            .markRevertSkipped(error: const QuarantinePurged()),
         // Restored: not counted.
         pending(plannedQuarantine('f (1).pdf', size: 3))
             .markDone(at: at, quarantineRef: QuarantineRef('q3'))

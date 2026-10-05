@@ -1,5 +1,4 @@
 import 'package:file_organizer/core/model/model.dart';
-import 'package:file_organizer/core/ports/ports.dart';
 import 'package:file_organizer/core/workflow/workflow.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -57,6 +56,7 @@ class _App {
         id: fs.sourceId,
         kind: SourceKind.desktopFolder,
         displayName: name,
+        location: 'memory:${fs.sourceId.value}',
         capabilities: fs.capabilities,
         enabled: enabled,
       ),
@@ -389,6 +389,36 @@ void main() {
 
       await app.workflow.start();
       expect(app.planOf(desktop).scan.resumed, isTrue);
+    });
+
+    test('while hashing: stops inside the file, back to idle', () async {
+      const block = InMemoryFileSource.hashBlockSize;
+      desktop.addFile('Download/video.mp4', bytes: List.filled(block * 5, 3));
+      desktop.addFile(
+        'Download/video (1).mp4',
+        bytes: List.filled(block * 5, 3),
+      );
+      final afterCancel = <String>[];
+      var cancelled = false;
+      desktop.onHashBlock = (path, n) {
+        if (cancelled) {
+          afterCancel.add('$path#$n');
+        } else if (path.value == 'Download/video.mp4') {
+          cancelled = true;
+          app.workflow.cancel();
+        }
+      };
+      await app.workflow.start();
+      expect(app.workflow.state, const Idle());
+      expect(afterCancel, isEmpty, reason: 'no block is read after cancel');
+
+      desktop.onHashBlock = null;
+      await app.workflow.start();
+      expect(app.workflow.state, isA<PlanReady>());
+      expect(
+        app.planOf(desktop).plan.operations.map((o) => o.fromPath?.value),
+        contains('Download/video (1).mp4'),
+      );
     });
 
     test('while executing: cancelled, then undone completely', () async {

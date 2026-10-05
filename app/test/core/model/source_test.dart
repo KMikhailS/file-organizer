@@ -60,12 +60,14 @@ void main() {
       String id = 's1',
       SourceKind kind = SourceKind.desktopFolder,
       String displayName = 'Home',
+      String location = '/home/user',
       SourceCapabilities capabilities = const SourceCapabilities(canMove: true),
       bool enabled = true,
     }) => Source(
       id: SourceId(id),
       kind: kind,
       displayName: displayName,
+      location: location,
       capabilities: capabilities,
       enabled: enabled,
     );
@@ -75,6 +77,7 @@ void main() {
         'id': source(id: 's2'),
         'kind': source(kind: SourceKind.androidSafTree),
         'displayName': source(displayName: 'Other'),
+        'location': source(location: '/storage/emulated/0'),
         'capabilities': source(capabilities: SourceCapabilities.none),
         'enabled': source(enabled: false),
       });

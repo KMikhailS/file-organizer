@@ -74,7 +74,7 @@ void main() {
         expect(op.status, expected);
         expect(op.executedAt, isNotNull);
         if (expected == OperationStatus.skipped) {
-          expect(op.error, startsWith('interrupted: '));
+          expect(op.error, const InterruptedOperation());
         }
         if (op.type == OperationType.quarantine &&
             expected == OperationStatus.done) {
@@ -142,11 +142,7 @@ void main() {
       fs.removeExternally(pending.toPath!.value);
       final op = (await recover()).recovered.single;
       expect(op.status, OperationStatus.failed);
-      expect(
-        op.error,
-        '${Recovery.needsAttention}: '
-        'the file is neither at its old nor its new place',
-      );
+      expect(op.error, const NeedsAttention(AttentionCause.fileLost));
     });
 
     test('a quarantined file whose quarantine object is gone', () async {
@@ -158,7 +154,7 @@ void main() {
       await fs.purgeQuarantined(QuarantineRef(fs.quarantined.keys.single));
       final op = (await recover()).recovered.single;
       expect(op.status, OperationStatus.failed);
-      expect(op.error, startsWith(Recovery.needsAttention));
+      expect(op.error, const NeedsAttention(AttentionCause.fileLost));
     });
 
     test('a file that cannot be checked', () async {
@@ -172,7 +168,10 @@ void main() {
       expect(op.status, OperationStatus.failed);
       expect(
         op.error,
-        '${Recovery.needsAttention}: cannot check: permissionDenied',
+        const NeedsAttention(
+          AttentionCause.cannotCheck,
+          errorKind: FileErrorKind.permissionDenied,
+        ),
       );
     });
   });

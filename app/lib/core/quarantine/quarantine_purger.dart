@@ -2,6 +2,7 @@ import 'package:file_organizer/core/internal/list_equals.dart';
 import 'package:file_organizer/core/model/cleanup_session.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/operation.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/session_stats.dart';
 import 'package:file_organizer/core/ports/clock.dart';
 import 'package:file_organizer/core/ports/file_error.dart';
@@ -71,7 +72,7 @@ final class PurgeResult {
 /// available, sessions not recovered yet, and files whose undo was already
 /// tried (the user wanted them back).
 ///
-/// A purged operation becomes revertSkipped with [purgedReason] — the same
+/// A purged operation becomes revertSkipped with `QuarantinePurged` — the same
 /// state an undo gives when it finds the quarantine purged — so the UI knows
 /// that undo is no longer possible for it.
 final class QuarantinePurger {
@@ -81,9 +82,6 @@ final class QuarantinePurger {
     required this._settings,
     required this._clock,
   });
-
-  /// Reason of purged operations; the undo uses the same text.
-  static const String purgedReason = 'the quarantine was purged';
 
   final OperationJournal _journal;
   final SessionRepository _sessions;
@@ -118,7 +116,7 @@ final class QuarantinePurger {
       switch (await source.purgeQuarantined(op.quarantineRef!)) {
         case FileSuccess():
         case FileFailure(error: FileError(kind: FileErrorKind.notFound)):
-          final marked = op.markRevertSkipped(reason: purgedReason);
+          final marked = op.markRevertSkipped(error: const QuarantinePurged());
           await _journal.update(marked);
           purged.add(marked);
         case FileFailure(:final error):

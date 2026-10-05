@@ -3,6 +3,8 @@ import 'package:file_organizer/core/dedupe/keeper_selection.dart';
 import 'package:file_organizer/core/model/duplicate_group.dart';
 import 'package:file_organizer/core/model/file_entry.dart';
 import 'package:file_organizer/core/model/zone.dart';
+import 'package:file_organizer/core/ports/cancel_token.dart';
+import 'package:file_organizer/core/ports/file_error.dart';
 import 'package:file_organizer/core/ports/file_index_repository.dart';
 import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/core/ports/file_source.dart';
@@ -18,6 +20,9 @@ import 'package:file_organizer/core/zones/zone_map.dart';
 /// - Empty files and files in excluded zones take no part.
 /// - A file that cannot be hashed (locked, gone, no access) is left out and
 ///   reported; the rest goes on.
+/// - A cancelled [CancelToken] stops the search inside the current file
+///   (the adapter checks it between read blocks): the stream ends without
+///   [DedupeCompleted]. Hashes computed so far stay in the index.
 ///
 /// Reads files only; never changes them.
 final class DuplicateFinder {
@@ -30,19 +35,29 @@ final class DuplicateFinder {
 
   /// Emits [DedupeProgress] after each size bucket and ends with
   /// [DedupeCompleted]. Cancelling the subscription stops after the current
-  /// bucket; hashes computed so far stay in the index.
+  /// bucket; cancelling [cancel] stops inside the current file and ends the
+  /// stream without [DedupeCompleted]. Hashes computed so far stay in the
+  /// index either way.
   ///
   /// Throws [ArgumentError] right away if [zones] belong to another source.
-  Stream<DedupeEvent> find(FileSource source, ZoneMap zones) {
+  Stream<DedupeEvent> find(
+    FileSource source,
+    ZoneMap zones, {
+    CancelToken? cancel,
+  }) {
     if (zones.sourceId != source.sourceId) {
       throw ArgumentError.value(zones, 'zones', 'belongs to another source');
     }
-    return _find(source, zones);
+    return _find(source, zones, cancel);
   }
 
-  Stream<DedupeEvent> _find(FileSource source, ZoneMap zones) async* {
+  Stream<DedupeEvent> _find(
+    FileSource source,
+    ZoneMap zones,
+    CancelToken? cancel,
+  ) async* {
     final sourceId = source.sourceId;
-    final run = _Run(source, _index);
+    final run = _Run(source, _index, cancel);
     final sizes = [
       for (final size in await _index.sizesWithMultipleFiles(sourceId))
         if (size > 0) size,
@@ -61,8 +76,15 @@ final class DuplicateFinder {
           for (final bucket in buckets) ...await run.split(bucket, full: false),
         ];
       }
+      if (run.cancelled) {
+        return;
+      }
       for (final bucket in buckets) {
-        for (final same in await run.split(bucket, full: true)) {
+        final split = await run.split(bucket, full: true);
+        if (run.cancelled) {
+          return;
+        }
+        for (final same in split) {
           final choice = chooseKeeper(same, (f) => zones.zoneOfFile(f.path));
           groups.add(
             DuplicateGroup(
@@ -94,12 +116,16 @@ final class DuplicateFinder {
 
 /// State of one detection run.
 final class _Run {
-  _Run(this._source, this._index);
+  _Run(this._source, this._index, this._cancel);
 
   final FileSource _source;
   final FileIndexRepository _index;
+  final CancelToken? _cancel;
   final List<DedupeSkip> skipped = [];
   int hashed = 0;
+
+  /// Whether the token was cancelled; then [split] returns no buckets.
+  bool get cancelled => _cancel?.isCancelled ?? false;
 
   /// Splits [files] by partial or full hash, computing missing hashes and
   /// caching them in the index. Returns only buckets of two or more files,
@@ -108,19 +134,23 @@ final class _Run {
     List<FileEntry> files, {
     required bool full,
   }) async {
-    if (files.length < 2) {
+    if (files.length < 2 || cancelled) {
       return const [];
     }
     final byHash = <String, List<FileEntry>>{};
     final computed = <FileEntry>[];
+    files:
     for (final file in files) {
       var entry = file;
       var hash = full ? entry.fullHash : entry.partialHash;
       if (hash == null) {
         final result = full
-            ? await _source.fullHash(entry.path)
-            : await _source.partialHash(entry.path);
+            ? await _source.fullHash(entry.path, cancel: _cancel)
+            : await _source.partialHash(entry.path, cancel: _cancel);
         switch (result) {
+          case FileFailure(error: FileError(kind: FileErrorKind.cancelled)):
+            // Not a problem of this file: the whole search stops.
+            break files;
           case FileFailure(:final error):
             skipped.add(DedupeSkip(entry.path, error));
             continue;
@@ -137,6 +167,9 @@ final class _Run {
     }
     if (computed.isNotEmpty) {
       await _index.upsertAll(computed);
+    }
+    if (cancelled) {
+      return const [];
     }
     return [
       for (final bucket in byHash.values)

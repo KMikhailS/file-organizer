@@ -27,13 +27,13 @@ class FakeClassifier implements Classifier {
             category: category,
             confidence: 1,
             origin: ClassificationOrigin.ai,
-            reason: 'fake answer',
+            reason: const AiSuggestion(),
           ),
           null => Classification(
             category: Category.unresolved,
             confidence: 0,
             origin: ClassificationOrigin.ai,
-            reason: 'fake: no answer',
+            reason: const AiSuggestion(),
           ),
         },
     ];

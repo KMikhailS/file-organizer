@@ -7,6 +7,7 @@ import 'package:file_organizer/core/model/fingerprint.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/operation.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/operation_status.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/plan.dart';
@@ -150,7 +151,8 @@ final class Executor {
           throw StateError('unexpected status ${finished.status}');
       }
       if (blocksFolder) {
-        context.failedFolders.add(finished.toPath!.value.toLowerCase());
+        context.failedFolders[finished.toPath!.value.toLowerCase()] =
+            finished.toPath!;
       }
       progress.add(
         ExecutionProgress(
@@ -180,7 +182,7 @@ final class Executor {
   Future<(Operation, bool)> _perform(Operation op, _Context context) async {
     final blocker = context.blocker(op);
     if (blocker != null) {
-      return (_skip(op, 'depends on folder $blocker, which is missing'), true);
+      return (_skip(op, DependsOnMissingFolder(blocker)), true);
     }
 
     switch (op.type) {
@@ -193,7 +195,7 @@ final class Executor {
             if (error.kind == FileErrorKind.targetExists) {
               final stat = await context.source.stat(to);
               if (stat case FileSuccess(value: final s) when s.isDirectory) {
-                return (_skip(op, 'folder already exists'), false);
+                return (_skip(op, const FolderExists()), false);
               }
             }
             return (_fail(op, error), true);
@@ -236,21 +238,24 @@ final class Executor {
   }
 
   /// Why the file of [op] cannot be used as planned, or `null`.
-  Future<String?> _checkUnchanged(_Context context, Operation op) async {
+  Future<OperationProblem?> _checkUnchanged(
+    _Context context,
+    Operation op,
+  ) async {
     final from = op.fromPath!;
     final Fingerprint expected = op.fingerprint!;
     switch (await context.source.stat(from)) {
       case FileFailure(:final error):
         return error.kind == FileErrorKind.notFound
-            ? 'file is gone'
-            : 'cannot check the file: ${_describe(error)}';
+            ? const FileGone()
+            : _problem(error);
       case FileSuccess(value: final stat):
         if (!stat.isFile) {
-          return 'not a file any more';
+          return const NotAFile();
         }
         if (stat.size != expected.size ||
             stat.modifiedAt != expected.modifiedAt) {
-          return 'file changed since the scan';
+          return const FileChanged();
         }
         return null;
     }
@@ -258,39 +263,43 @@ final class Executor {
 
   /// Why [op] is not a verified duplicate, or `null`. Hashes are computed
   /// again: the cached ones may be stale.
-  Future<String?> _checkDuplicate(_Context context, Operation op) async {
+  Future<OperationProblem?> _checkDuplicate(
+    _Context context,
+    Operation op,
+  ) async {
     final group = context.groups[op.fromPath!];
     if (group == null) {
-      return 'not part of a duplicate group';
+      return const NotADuplicate();
     }
     switch (await context.source.fullHash(op.fromPath!)) {
       case FileFailure(:final error):
-        return 'cannot hash the copy: ${_describe(error)}';
+        return _problem(error);
       case FileSuccess(:final value) when value != group.fullHash:
-        return 'the copy changed: no longer a duplicate';
+        return const NotADuplicate();
       case FileSuccess():
         break;
     }
     final keeper = context.movedTo[group.keeper.path] ?? group.keeper.path;
     switch (await context.source.fullHash(keeper)) {
+      case FileFailure(error: FileError(kind: FileErrorKind.notFound)):
+        return KeeperChanged(keeper);
       case FileFailure(:final error):
-        return 'cannot hash the kept file $keeper: ${_describe(error)}';
+        return _problem(error, path: keeper);
       case FileSuccess(:final value) when value != group.fullHash:
-        return 'the kept file $keeper changed';
+        return KeeperChanged(keeper);
       case FileSuccess():
         return null;
     }
   }
 
-  Operation _skip(Operation op, String reason) =>
-      op.markSkipped(at: _clock.now(), reason: reason);
+  Operation _skip(Operation op, OperationProblem problem) =>
+      op.markSkipped(at: _clock.now(), error: problem);
 
   Operation _fail(Operation op, FileError error) =>
-      op.markFailed(at: _clock.now(), error: _describe(error));
+      op.markFailed(at: _clock.now(), error: _problem(error));
 
-  static String _describe(FileError error) => error.message == null
-      ? error.kind.name
-      : '${error.kind.name}: ${error.message}';
+  static OperationProblem _problem(FileError error, {LogicalPath? path}) =>
+      FileSystemError(error.kind, path: path, detail: error.message);
 }
 
 final class _CancelFlag {
@@ -310,18 +319,18 @@ final class _Context {
   /// Where files moved in this session went.
   final Map<LogicalPath, LogicalPath> movedTo = {};
 
-  /// Folders (lower case) that could not be created.
-  final Set<String> failedFolders = {};
+  /// Folders that could not be created, by their lower-case path.
+  final Map<String, LogicalPath> failedFolders = {};
 
   /// The missing folder [op] depends on, or `null`.
-  String? blocker(Operation op) {
+  LogicalPath? blocker(Operation op) {
     final to = op.toPath;
     if (to == null || failedFolders.isEmpty) {
       return null;
     }
     final parent = to.parent!.value.toLowerCase();
-    for (final folder in failedFolders) {
-      if (parent == folder || parent.startsWith('$folder/')) {
+    for (final MapEntry(key: lower, value: folder) in failedFolders.entries) {
+      if (parent == lower || parent.startsWith('$lower/')) {
         return folder;
       }
     }

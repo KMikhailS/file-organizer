@@ -48,6 +48,7 @@ void main() {
           id: fs.sourceId,
           kind: SourceKind.desktopFolder,
           displayName: fs.sourceId.value,
+          location: 'memory:${fs.sourceId.value}',
           capabilities: fs.capabilities,
           enabled: true,
         ),

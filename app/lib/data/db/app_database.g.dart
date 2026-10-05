@@ -37,6 +37,18 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, SourceRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _locationMeta = const VerificationMeta(
+    'location',
+  );
+  @override
+  late final GeneratedColumn<String> location = GeneratedColumn<String>(
+    'location',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
   static const VerificationMeta _canMoveMeta = const VerificationMeta(
     'canMove',
   );
@@ -152,6 +164,7 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, SourceRow> {
     id,
     kind,
     displayName,
+    location,
     canMove,
     canMkdir,
     canQuarantine,
@@ -196,6 +209,12 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, SourceRow> {
       );
     } else if (isInserting) {
       context.missing(_displayNameMeta);
+    }
+    if (data.containsKey('location')) {
+      context.handle(
+        _locationMeta,
+        location.isAcceptableOrUnknown(data['location']!, _locationMeta),
+      );
     }
     if (data.containsKey('can_move')) {
       context.handle(
@@ -297,6 +316,10 @@ class $SourcesTable extends Sources with TableInfo<$SourcesTable, SourceRow> {
         DriftSqlType.string,
         data['${effectivePrefix}display_name'],
       )!,
+      location: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}location'],
+      )!,
       canMove: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}can_move'],
@@ -342,6 +365,9 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
   final String id;
   final String kind;
   final String displayName;
+
+  /// Added in schema version 2; empty for sources of version 1.
+  final String location;
   final bool canMove;
   final bool canMkdir;
   final bool canQuarantine;
@@ -354,6 +380,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
     required this.id,
     required this.kind,
     required this.displayName,
+    required this.location,
     required this.canMove,
     required this.canMkdir,
     required this.canQuarantine,
@@ -369,6 +396,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
     map['id'] = Variable<String>(id);
     map['kind'] = Variable<String>(kind);
     map['display_name'] = Variable<String>(displayName);
+    map['location'] = Variable<String>(location);
     map['can_move'] = Variable<bool>(canMove);
     map['can_mkdir'] = Variable<bool>(canMkdir);
     map['can_quarantine'] = Variable<bool>(canQuarantine);
@@ -385,6 +413,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
       id: Value(id),
       kind: Value(kind),
       displayName: Value(displayName),
+      location: Value(location),
       canMove: Value(canMove),
       canMkdir: Value(canMkdir),
       canQuarantine: Value(canQuarantine),
@@ -405,6 +434,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
       id: serializer.fromJson<String>(json['id']),
       kind: serializer.fromJson<String>(json['kind']),
       displayName: serializer.fromJson<String>(json['displayName']),
+      location: serializer.fromJson<String>(json['location']),
       canMove: serializer.fromJson<bool>(json['canMove']),
       canMkdir: serializer.fromJson<bool>(json['canMkdir']),
       canQuarantine: serializer.fromJson<bool>(json['canQuarantine']),
@@ -426,6 +456,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
       'id': serializer.toJson<String>(id),
       'kind': serializer.toJson<String>(kind),
       'displayName': serializer.toJson<String>(displayName),
+      'location': serializer.toJson<String>(location),
       'canMove': serializer.toJson<bool>(canMove),
       'canMkdir': serializer.toJson<bool>(canMkdir),
       'canQuarantine': serializer.toJson<bool>(canQuarantine),
@@ -441,6 +472,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
     String? id,
     String? kind,
     String? displayName,
+    String? location,
     bool? canMove,
     bool? canMkdir,
     bool? canQuarantine,
@@ -453,6 +485,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
     id: id ?? this.id,
     kind: kind ?? this.kind,
     displayName: displayName ?? this.displayName,
+    location: location ?? this.location,
     canMove: canMove ?? this.canMove,
     canMkdir: canMkdir ?? this.canMkdir,
     canQuarantine: canQuarantine ?? this.canQuarantine,
@@ -470,6 +503,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
       displayName: data.displayName.present
           ? data.displayName.value
           : this.displayName,
+      location: data.location.present ? data.location.value : this.location,
       canMove: data.canMove.present ? data.canMove.value : this.canMove,
       canMkdir: data.canMkdir.present ? data.canMkdir.value : this.canMkdir,
       canQuarantine: data.canQuarantine.present
@@ -497,6 +531,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
           ..write('id: $id, ')
           ..write('kind: $kind, ')
           ..write('displayName: $displayName, ')
+          ..write('location: $location, ')
           ..write('canMove: $canMove, ')
           ..write('canMkdir: $canMkdir, ')
           ..write('canQuarantine: $canQuarantine, ')
@@ -514,6 +549,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
     id,
     kind,
     displayName,
+    location,
     canMove,
     canMkdir,
     canQuarantine,
@@ -530,6 +566,7 @@ class SourceRow extends DataClass implements Insertable<SourceRow> {
           other.id == this.id &&
           other.kind == this.kind &&
           other.displayName == this.displayName &&
+          other.location == this.location &&
           other.canMove == this.canMove &&
           other.canMkdir == this.canMkdir &&
           other.canQuarantine == this.canQuarantine &&
@@ -544,6 +581,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
   final Value<String> id;
   final Value<String> kind;
   final Value<String> displayName;
+  final Value<String> location;
   final Value<bool> canMove;
   final Value<bool> canMkdir;
   final Value<bool> canQuarantine;
@@ -557,6 +595,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
     this.id = const Value.absent(),
     this.kind = const Value.absent(),
     this.displayName = const Value.absent(),
+    this.location = const Value.absent(),
     this.canMove = const Value.absent(),
     this.canMkdir = const Value.absent(),
     this.canQuarantine = const Value.absent(),
@@ -571,6 +610,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
     required String id,
     required String kind,
     required String displayName,
+    this.location = const Value.absent(),
     required bool canMove,
     required bool canMkdir,
     required bool canQuarantine,
@@ -595,6 +635,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
     Expression<String>? id,
     Expression<String>? kind,
     Expression<String>? displayName,
+    Expression<String>? location,
     Expression<bool>? canMove,
     Expression<bool>? canMkdir,
     Expression<bool>? canQuarantine,
@@ -609,6 +650,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
       if (id != null) 'id': id,
       if (kind != null) 'kind': kind,
       if (displayName != null) 'display_name': displayName,
+      if (location != null) 'location': location,
       if (canMove != null) 'can_move': canMove,
       if (canMkdir != null) 'can_mkdir': canMkdir,
       if (canQuarantine != null) 'can_quarantine': canQuarantine,
@@ -628,6 +670,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
     Value<String>? id,
     Value<String>? kind,
     Value<String>? displayName,
+    Value<String>? location,
     Value<bool>? canMove,
     Value<bool>? canMkdir,
     Value<bool>? canQuarantine,
@@ -642,6 +685,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
       id: id ?? this.id,
       kind: kind ?? this.kind,
       displayName: displayName ?? this.displayName,
+      location: location ?? this.location,
       canMove: canMove ?? this.canMove,
       canMkdir: canMkdir ?? this.canMkdir,
       canQuarantine: canQuarantine ?? this.canQuarantine,
@@ -666,6 +710,9 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
     }
     if (displayName.present) {
       map['display_name'] = Variable<String>(displayName.value);
+    }
+    if (location.present) {
+      map['location'] = Variable<String>(location.value);
     }
     if (canMove.present) {
       map['can_move'] = Variable<bool>(canMove.value);
@@ -705,6 +752,7 @@ class SourcesCompanion extends UpdateCompanion<SourceRow> {
           ..write('id: $id, ')
           ..write('kind: $kind, ')
           ..write('displayName: $displayName, ')
+          ..write('location: $location, ')
           ..write('canMove: $canMove, ')
           ..write('canMkdir: $canMkdir, ')
           ..write('canQuarantine: $canQuarantine, ')
@@ -4273,6 +4321,7 @@ typedef $$SourcesTableCreateCompanionBuilder = SourcesCompanion Function({
   required String id,
   required String kind,
   required String displayName,
+  Value<String> location,
   required bool canMove,
   required bool canMkdir,
   required bool canQuarantine,
@@ -4287,6 +4336,7 @@ typedef $$SourcesTableUpdateCompanionBuilder = SourcesCompanion Function({
   Value<String> id,
   Value<String> kind,
   Value<String> displayName,
+  Value<String> location,
   Value<bool> canMove,
   Value<bool> canMkdir,
   Value<bool> canQuarantine,
@@ -4319,6 +4369,11 @@ class $$SourcesTableFilterComposer
 
   ColumnFilters<String> get displayName => $composableBuilder(
     column: $table.displayName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get location => $composableBuilder(
+    column: $table.location,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4387,6 +4442,11 @@ class $$SourcesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get location => $composableBuilder(
+    column: $table.location,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get canMove => $composableBuilder(
     column: $table.canMove,
     builder: (column) => ColumnOrderings(column),
@@ -4447,6 +4507,9 @@ class $$SourcesTableAnnotationComposer
     column: $table.displayName,
     builder: (column) => column,
   );
+
+  GeneratedColumn<String> get location =>
+      $composableBuilder(column: $table.location, builder: (column) => column);
 
   GeneratedColumn<bool> get canMove =>
       $composableBuilder(column: $table.canMove, builder: (column) => column);
@@ -4514,6 +4577,7 @@ class $$SourcesTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> kind = const Value.absent(),
                 Value<String> displayName = const Value.absent(),
+                Value<String> location = const Value.absent(),
                 Value<bool> canMove = const Value.absent(),
                 Value<bool> canMkdir = const Value.absent(),
                 Value<bool> canQuarantine = const Value.absent(),
@@ -4527,6 +4591,7 @@ class $$SourcesTableTableManager
                 id: id,
                 kind: kind,
                 displayName: displayName,
+                location: location,
                 canMove: canMove,
                 canMkdir: canMkdir,
                 canQuarantine: canQuarantine,
@@ -4542,6 +4607,7 @@ class $$SourcesTableTableManager
                 required String id,
                 required String kind,
                 required String displayName,
+                Value<String> location = const Value.absent(),
                 required bool canMove,
                 required bool canMkdir,
                 required bool canQuarantine,
@@ -4555,6 +4621,7 @@ class $$SourcesTableTableManager
                 id: id,
                 kind: kind,
                 displayName: displayName,
+                location: location,
                 canMove: canMove,
                 canMkdir: canMkdir,
                 canQuarantine: canQuarantine,

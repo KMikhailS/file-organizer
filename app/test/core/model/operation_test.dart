@@ -21,11 +21,19 @@ void main() {
   Operation moveIn(OperationStatus status) => switch (status) {
     OperationStatus.pending => move,
     OperationStatus.done => move.markDone(at: at),
-    OperationStatus.failed => move.markFailed(at: at, error: 'locked'),
-    OperationStatus.skipped => move.markSkipped(at: at, reason: 'changed'),
+    OperationStatus.failed => move.markFailed(
+      at: at,
+      error: const FileSystemError(FileErrorKind.locked),
+    ),
+    OperationStatus.skipped => move.markSkipped(
+      at: at,
+      error: const FileChanged(),
+    ),
     OperationStatus.reverted => move.markDone(at: at).markReverted(at: later),
     OperationStatus.revertSkipped =>
-      move.markDone(at: at).markRevertSkipped(reason: 'missing'),
+      move
+          .markDone(at: at)
+          .markRevertSkipped(error: const NotWhereCleanupPutIt()),
   };
 
   group('pending', () {
@@ -64,14 +72,20 @@ void main() {
     });
 
     test('failed and skipped carry the error', () {
-      final failed = move.markFailed(at: at, error: 'permission denied');
+      final failed = move.markFailed(
+        at: at,
+        error: const FileSystemError(FileErrorKind.permissionDenied),
+      );
       expect(failed.status, OperationStatus.failed);
-      expect(failed.error, 'permission denied');
+      expect(
+        failed.error,
+        const FileSystemError(FileErrorKind.permissionDenied),
+      );
       expect(failed.executedAt, at);
 
-      final skipped = move.markSkipped(at: at, reason: 'file changed');
+      final skipped = move.markSkipped(at: at, error: const FileChanged());
       expect(skipped.status, OperationStatus.skipped);
-      expect(skipped.error, 'file changed');
+      expect(skipped.error, const FileChanged());
     });
 
     test('reverted keeps execution data and clears the error', () {
@@ -83,7 +97,9 @@ void main() {
       expect(reverted.quarantineRef, ref);
 
       final retried = done
-          .markRevertSkipped(reason: 'target occupied')
+          .markRevertSkipped(
+            error: const FileSystemError(FileErrorKind.targetExists),
+          )
           .markReverted(at: later);
       expect(retried.status, OperationStatus.reverted);
       expect(retried.error, isNull);
@@ -91,19 +107,24 @@ void main() {
 
     test('revertSkipped can be retried', () {
       final skipped = moveIn(OperationStatus.revertSkipped);
-      final again = skipped.markRevertSkipped(reason: 'still missing');
+      final again = skipped.markRevertSkipped(
+        error: const NotWhereCleanupPutIt(),
+      );
       expect(again.status, OperationStatus.revertSkipped);
-      expect(again.error, 'still missing');
+      expect(again.error, const NotWhereCleanupPutIt());
       expect(again.executedAt, at);
     });
 
     test('mark methods follow canTransitionTo for every status pair', () {
       final marks = <OperationStatus, Operation Function(Operation)>{
         OperationStatus.done: (o) => o.markDone(at: at),
-        OperationStatus.failed: (o) => o.markFailed(at: at, error: 'e'),
-        OperationStatus.skipped: (o) => o.markSkipped(at: at, reason: 'r'),
+        OperationStatus.failed: (o) =>
+            o.markFailed(at: at, error: const FileGone()),
+        OperationStatus.skipped: (o) =>
+            o.markSkipped(at: at, error: const FileChanged()),
         OperationStatus.reverted: (o) => o.markReverted(at: later),
-        OperationStatus.revertSkipped: (o) => o.markRevertSkipped(reason: 'r'),
+        OperationStatus.revertSkipped: (o) =>
+            o.markRevertSkipped(error: const FileChanged()),
       };
       for (final from in OperationStatus.values) {
         for (final MapEntry(key: to, value: mark) in marks.entries) {
@@ -170,7 +191,7 @@ void main() {
       int seq = 0,
       OperationStatus status = OperationStatus.done,
       QuarantineRef? quarantineRef,
-      String? error,
+      OperationProblem? error,
       DateTime? executedAt,
       DateTime? revertedAt,
     }) => Operation(
@@ -182,7 +203,7 @@ void main() {
       fromPath: fromPath ?? p('a.pdf'),
       toPath: toPath ?? p('b.pdf'),
       fingerprint: fp ?? fingerprint(),
-      reason: 'r',
+      reason: const Classified(ByExtension('pdf')),
       groupKey: 'g',
       status: status,
       quarantineRef: quarantineRef,
@@ -232,7 +253,10 @@ void main() {
     });
 
     test('an error on a done operation', () {
-      expect(() => build(executedAt: at, error: 'e'), throwsArgumentError);
+      expect(
+        () => build(executedAt: at, error: const FileGone()),
+        throwsArgumentError,
+      );
     });
 
     for (final status in [
@@ -266,7 +290,7 @@ void main() {
           fromPath: p('a.pdf'),
           toPath: null,
           fingerprint: fingerprint(),
-          reason: 'r',
+          reason: DuplicateOf(p('b.pdf')),
           groupKey: 'g',
           status: OperationStatus.pending,
           quarantineRef: ref,
@@ -295,10 +319,10 @@ void main() {
       String from = 'a.pdf',
       Fingerprint? fp,
       QuarantineRef? quarantineRef,
-      String reason = 'r',
+      OperationReason reason = const Classified(ByExtension('pdf')),
       String groupKey = 'g',
       OperationStatus status = OperationStatus.revertSkipped,
-      String error = 'missing',
+      OperationProblem error = const NotWhereCleanupPutIt(),
       DateTime? executedAt,
     }) => Operation(
       id: opId,
@@ -329,10 +353,10 @@ void main() {
       'fromPath': op(from: 'c.pdf'),
       'fingerprint': op(fp: fingerprint(size: 1)),
       'quarantineRef': op(quarantineRef: QuarantineRef('other')),
-      'reason': op(reason: 'other'),
+      'reason': op(reason: DuplicateOf(p('b.pdf'))),
       'groupKey': op(groupKey: 'other'),
       'status, error and revertedAt': op(status: OperationStatus.reverted),
-      'error': op(error: 'other'),
+      'error': op(error: const QuarantinePurged()),
       'executedAt': op(executedAt: later),
     });
   });

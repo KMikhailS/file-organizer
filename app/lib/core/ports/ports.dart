@@ -1,6 +1,7 @@
 /// Interfaces between the core and the outside world.
 library;
 
+export 'package:file_organizer/core/ports/cancel_token.dart';
 export 'package:file_organizer/core/ports/classifier.dart';
 export 'package:file_organizer/core/ports/clock.dart';
 export 'package:file_organizer/core/ports/file_error.dart';

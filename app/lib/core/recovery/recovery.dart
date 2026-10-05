@@ -2,6 +2,7 @@ import 'package:file_organizer/core/internal/list_equals.dart';
 import 'package:file_organizer/core/model/cleanup_session.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/operation.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/operation_status.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/session_stats.dart';
@@ -70,9 +71,6 @@ final class Recovery {
   final SessionRepository _sessions;
   final Clock _clock;
 
-  /// Prefix of the errors of operations that need the user's attention.
-  static const String needsAttention = 'needs attention';
-
   /// Sessions a crash left running, newest first.
   Future<List<CleanupSession>> interruptedSessions() =>
       _sessions.byStatus(SessionStatus.running);
@@ -139,22 +137,23 @@ final class Recovery {
           FileSuccess() ||
           FileFailure(
             error: FileError(kind: FileErrorKind.notFound),
-          ) => _skipped(op, 'the folder was not created'),
+          ) => _skipped(op),
           FileFailure(:final error) => _attention(
             op,
-            'cannot check: ${error.kind.name}',
+            AttentionCause.cannotCheck,
+            error.kind,
           ),
         };
 
       case OperationType.move:
         switch (await source.stat(op.fromPath!)) {
           case FileSuccess(value: final s) when s.isFile:
-            return _skipped(op, 'the file was not moved');
+            return _skipped(op);
           case FileSuccess() ||
               FileFailure(error: FileError(kind: FileErrorKind.notFound)):
             break;
           case FileFailure(:final error):
-            return _attention(op, 'cannot check: ${error.kind.name}');
+            return _attention(op, AttentionCause.cannotCheck, error.kind);
         }
         final expected = op.fingerprint!;
         return switch (await source.stat(op.toPath!)) {
@@ -163,21 +162,18 @@ final class Recovery {
                   s.size == expected.size &&
                   s.modifiedAt == expected.modifiedAt =>
             _done(op),
-          _ => _attention(
-            op,
-            'the file is neither at its old nor its new place',
-          ),
+          _ => _attention(op, AttentionCause.fileLost),
         };
 
       case OperationType.quarantine:
         switch (await source.stat(op.fromPath!)) {
           case FileSuccess(value: final s) when s.isFile:
-            return _skipped(op, 'the file was not quarantined');
+            return _skipped(op);
           case FileSuccess() ||
               FileFailure(error: FileError(kind: FileErrorKind.notFound)):
             break;
           case FileFailure(:final error):
-            return _attention(op, 'cannot check: ${error.kind.name}');
+            return _attention(op, AttentionCause.cannotCheck, error.kind);
         }
         return switch (await source.findQuarantined(
           op.sessionId,
@@ -187,29 +183,33 @@ final class Recovery {
             at: _clock.now(),
             quarantineRef: ref,
           ),
-          FileSuccess() => _attention(
-            op,
-            'the file is gone and not in the quarantine',
-          ),
+          FileSuccess() => _attention(op, AttentionCause.fileLost),
           FileFailure(:final error) => _attention(
             op,
-            'cannot search the quarantine: ${error.kind.name}',
+            AttentionCause.cannotSearchQuarantine,
+            error.kind,
           ),
         };
 
       case OperationType.addToAlbum:
         return switch (await source.stat(op.fromPath!)) {
           FileSuccess(value: final s) when s.isFile => _done(op),
-          _ => _attention(op, 'the photo is gone'),
+          _ => _attention(op, AttentionCause.fileLost),
         };
     }
   }
 
   Operation _done(Operation op) => op.markDone(at: _clock.now());
 
-  Operation _skipped(Operation op, String reason) =>
-      op.markSkipped(at: _clock.now(), reason: 'interrupted: $reason');
+  Operation _skipped(Operation op) =>
+      op.markSkipped(at: _clock.now(), error: const InterruptedOperation());
 
-  Operation _attention(Operation op, String reason) =>
-      op.markFailed(at: _clock.now(), error: '$needsAttention: $reason');
+  Operation _attention(
+    Operation op,
+    AttentionCause cause, [
+    FileErrorKind? errorKind,
+  ]) => op.markFailed(
+    at: _clock.now(),
+    error: NeedsAttention(cause, errorKind: errorKind),
+  );
 }

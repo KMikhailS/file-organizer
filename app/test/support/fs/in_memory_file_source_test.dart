@@ -325,6 +325,54 @@ void main() {
     );
   });
 
+  group('hashing in blocks with a cancel token', () {
+    const block = InMemoryFileSource.hashBlockSize;
+
+    test(
+      'full hash reads every block, partial only the first and last',
+      () async {
+        fs.addFile('big', bytes: List.filled(block * 3 + 1, 7));
+        final blocks = <String>[];
+        fs.onHashBlock = (path, n) => blocks.add('$path#$n');
+        await fs.fullHash(p('big'));
+        expect(blocks, ['big#0', 'big#1', 'big#2', 'big#3']);
+        blocks.clear();
+        await fs.partialHash(p('big'));
+        expect(blocks, ['big#0', 'big#3']);
+      },
+    );
+
+    test(
+      'cancelling in the middle of a file stops before the next block',
+      () async {
+        fs.addFile('big', bytes: List.filled(block * 3, 7));
+        final token = CancelToken();
+        final read = <int>[];
+        fs.onHashBlock = (_, n) {
+          read.add(n);
+          if (n == 0) {
+            token.cancel();
+          }
+        };
+        final result = await fs.fullHash(p('big'), cancel: token);
+        expect(result, isA<FileFailure<String>>());
+        expect(
+          (result as FileFailure<String>).error.kind,
+          FileErrorKind.cancelled,
+        );
+        expect(read, [0]);
+      },
+    );
+
+    test('an empty file is one block', () async {
+      fs.addFile('empty', bytes: const []);
+      var blocks = 0;
+      fs.onHashBlock = (_, _) => blocks++;
+      await fs.fullHash(p('empty'));
+      expect(blocks, 1);
+    });
+  });
+
   group('case-insensitive storage', () {
     late InMemoryFileSource ci;
     setUp(

@@ -164,6 +164,22 @@ void fileSourceContract(Future<FileSourceFixture> Function() create) {
       expect(await hashOf('big2'), isNot(await hashOf('big1')));
     });
 
+    test('a cancelled token stops hashing; a new token works', () async {
+      final cancelled = CancelToken()..cancel();
+      await expectError(
+        fs.partialHash(p('a.txt'), cancel: cancelled),
+        FileErrorKind.cancelled,
+      );
+      await expectError(
+        fs.fullHash(p('a.txt'), cancel: cancelled),
+        FileErrorKind.cancelled,
+      );
+      expect(
+        await ok(fs.fullHash(p('a.txt'), cancel: CancelToken())),
+        await hashOf('a.txt'),
+      );
+    });
+
     test('fail for folders and missing files', () async {
       await expectError(fs.fullHash(p('dir')), FileErrorKind.wrongType);
       await expectError(fs.fullHash(p('nope')), FileErrorKind.notFound);

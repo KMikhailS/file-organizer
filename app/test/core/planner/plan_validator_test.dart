@@ -104,7 +104,7 @@ void main() {
       sourceId: const SourceId('other'),
       path: p('Download/a.pdf'),
       fingerprint: fingerprint(),
-      reason: 'r',
+      reason: DuplicateOf(p('a.pdf')),
       groupKey: 'g',
       approved: true,
     );

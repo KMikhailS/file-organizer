@@ -35,7 +35,7 @@ void main() {
         sourceId: testSource,
         path: p('IMG_1.HEIC'),
         fingerprint: fingerprint(),
-        reason: 'duplicate',
+        reason: DuplicateOf(p('IMG_1 (1).HEIC')),
         groupKey: 'duplicates',
         approved: true,
       );
@@ -130,7 +130,7 @@ void main() {
       String from = 'a.pdf',
       String to = 'Documents/a.pdf',
       Fingerprint? fp,
-      String reason = 'r',
+      OperationReason reason = const Classified(ByExtension('pdf')),
       String groupKey = 'g',
       bool approved = true,
     }) => PlannedOperation.move(
@@ -149,7 +149,7 @@ void main() {
       'fromPath': move(from: 'b.pdf'),
       'toPath': move(to: 'Documents/b.pdf'),
       'fingerprint': move(fp: fingerprint(size: 1)),
-      'reason': move(reason: 'other'),
+      'reason': move(reason: FolderFor(p('Documents'))),
       'groupKey': move(groupKey: 'other'),
       'approved': move(approved: false),
     });

@@ -13,7 +13,7 @@ void main() {
         category: category,
         confidence: 1,
         origin: ClassificationOrigin.rule,
-        reason: 'test',
+        reason: const ByExtension('test'),
         subfolder: subfolder,
       );
 

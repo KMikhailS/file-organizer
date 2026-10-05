@@ -1,4 +1,5 @@
 import 'package:file_organizer/core/model/category.dart';
+import 'package:file_organizer/core/model/classification_reason.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:meta/meta.dart';
 
@@ -46,8 +47,8 @@ final class Classification {
 
   final ClassificationOrigin origin;
 
-  /// Human-readable explanation.
-  final String reason;
+  /// Why the file got [category]; the UI turns it into text.
+  final ClassificationReason reason;
 
   @override
   bool operator ==(Object other) =>
@@ -65,5 +66,5 @@ final class Classification {
   @override
   String toString() =>
       'Classification($category, subfolder: $subfolder, '
-      'confidence: $confidence, $origin, "$reason")';
+      'confidence: $confidence, $origin, $reason)';
 }

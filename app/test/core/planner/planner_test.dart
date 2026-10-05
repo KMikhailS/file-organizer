@@ -75,12 +75,19 @@ void main() {
       ]);
       expect(plan.operations.map((o) => o.approved), everyElement(isTrue));
       final quarantine = plan.operations.first;
-      expect(quarantine.reason, 'duplicate of Download/invoice_2024.pdf');
+      expect(
+        quarantine.reason,
+        DuplicateOf(LogicalPath('Download/invoice_2024.pdf')),
+      );
       expect(
         plan.operations
             .firstWhere((o) => o.fromPath?.value == 'Download/notes.txt')
             .reason,
-        'extension .txt',
+        const Classified(ByExtension('txt')),
+      );
+      expect(
+        plan.operations.firstWhere((o) => o.type == OperationType.mkdir).reason,
+        isA<FolderFor>(),
       );
     });
 
@@ -378,7 +385,7 @@ final class _SubfolderAi implements Classifier {
         subfolder: LogicalPath('Налоги'),
         confidence: 0.8,
         origin: ClassificationOrigin.ai,
-        reason: 'looks like taxes',
+        reason: const AiSuggestion(),
       ),
   ];
 }

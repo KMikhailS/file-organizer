@@ -3,6 +3,8 @@ import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/quarantine_ref.dart';
 import 'package:file_organizer/core/model/scan_cursor.dart';
 import 'package:file_organizer/core/model/source_capabilities.dart';
+import 'package:file_organizer/core/ports/cancel_token.dart';
+import 'package:file_organizer/core/ports/file_error.dart';
 import 'package:file_organizer/core/ports/file_list_page.dart';
 import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/core/ports/file_stat.dart';
@@ -49,10 +51,19 @@ abstract interface class FileSource {
   Future<FileResult<bool>> exists(LogicalPath path);
 
   /// Hash of the size and the first and last 64 KB of the file at [path].
-  Future<FileResult<String>> partialHash(LogicalPath path);
+  ///
+  /// With [cancel], the adapter stops between read blocks once it is
+  /// cancelled and returns [FileErrorKind.cancelled].
+  Future<FileResult<String>> partialHash(
+    LogicalPath path, {
+    CancelToken? cancel,
+  });
 
   /// Hash of the whole content of the file at [path], computed as a stream.
-  Future<FileResult<String>> fullHash(LogicalPath path);
+  ///
+  /// With [cancel], the adapter stops between read blocks once it is
+  /// cancelled and returns [FileErrorKind.cancelled].
+  Future<FileResult<String>> fullHash(LogicalPath path, {CancelToken? cancel});
 
   /// Creates the folder [path]. Its parent must exist (one level at a time,
   /// so every created folder is journaled). `targetExists` if anything is

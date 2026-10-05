@@ -1,6 +1,7 @@
 import 'package:file_organizer/core/classify/builtin_rules.dart';
 import 'package:file_organizer/core/model/category.dart';
 import 'package:file_organizer/core/model/classification.dart';
+import 'package:file_organizer/core/model/classification_reason.dart';
 import 'package:file_organizer/core/model/classification_rule.dart';
 import 'package:file_organizer/core/model/file_entry.dart';
 import 'package:file_organizer/core/ports/classifier.dart';
@@ -33,7 +34,7 @@ final class RuleClassifier implements Classifier {
   Classification classifyFile(FileEntry file) {
     for (final rule in _userRules) {
       if (rule.matches(file)) {
-        return _result(rule.category, 'user rule ${rule.id}');
+        return _result(rule.category, ByUserRule(rule.id));
       }
     }
 
@@ -45,25 +46,25 @@ final class RuleClassifier implements Classifier {
     final isImage = BuiltinRules.screenshotExtensions.contains(ext);
 
     if (screenshotName && !isImage) {
-      return _unresolved('screenshot name on a .$ext file');
+      return _unresolved(ScreenshotNameNotImage(ext));
     }
     final byExtension = BuiltinRules.categoryOf(ext);
     if (byExtension == null) {
       return _unresolved(
-        ext.isEmpty ? 'no extension' : 'unknown extension .$ext',
+        ext.isEmpty ? const NoExtension() : UnknownExtension(ext),
       );
     }
     if (file.mimeType case final mime? when _contradicts(mime, byExtension)) {
-      return _unresolved('MIME type $mime disagrees with .$ext');
+      return _unresolved(MimeMismatch(mimeType: mime, extension: ext));
     }
     if (isImage && screenshotName) {
-      return _result(Category.screenshots, 'screenshot name');
+      return _result(Category.screenshots, const ScreenshotName());
     }
     final folder = file.path.parent!.name.toLowerCase();
     if (isImage && BuiltinRules.screenshotFolders.contains(folder)) {
-      return _result(Category.screenshots, 'in a screenshots folder');
+      return _result(Category.screenshots, const ScreenshotFolder());
     }
-    return _result(byExtension, 'extension .$ext');
+    return _result(byExtension, ByExtension(ext));
   }
 
   /// Whether [mime] and the extension's [category] point to different media
@@ -82,14 +83,16 @@ final class RuleClassifier implements Classifier {
     return mimeFamily?.key != extensionFamily?.key;
   }
 
-  static Classification _result(Category category, String reason) =>
-      Classification(
-        category: category,
-        confidence: category == Category.unresolved ? 0 : 1,
-        origin: ClassificationOrigin.rule,
-        reason: reason,
-      );
+  static Classification _result(
+    Category category,
+    ClassificationReason reason,
+  ) => Classification(
+    category: category,
+    confidence: category == Category.unresolved ? 0 : 1,
+    origin: ClassificationOrigin.rule,
+    reason: reason,
+  );
 
-  static Classification _unresolved(String reason) =>
+  static Classification _unresolved(ClassificationReason reason) =>
       _result(Category.unresolved, reason);
 }

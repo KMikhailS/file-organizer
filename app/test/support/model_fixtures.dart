@@ -52,7 +52,7 @@ PlannedOperation plannedMove(
   from: LogicalPath(from),
   to: LogicalPath(to),
   fingerprint: fingerprint(size: size),
-  reason: 'test move',
+  reason: const Classified(ByExtension('test')),
   groupKey: groupKey,
   approved: approved,
 );
@@ -67,7 +67,7 @@ PlannedOperation plannedQuarantine(
   sourceId: testSource,
   path: LogicalPath(path),
   fingerprint: fingerprint(size: size),
-  reason: 'test quarantine',
+  reason: DuplicateOf(LogicalPath('keeper/$path')),
   groupKey: groupKey,
   approved: approved,
 );
@@ -80,7 +80,7 @@ PlannedOperation plannedMkdir(
 }) => PlannedOperation.mkdir(
   sourceId: testSource,
   path: LogicalPath(path),
-  reason: 'test mkdir',
+  reason: FolderFor(LogicalPath(path)),
   groupKey: groupKey,
   approved: approved,
 );

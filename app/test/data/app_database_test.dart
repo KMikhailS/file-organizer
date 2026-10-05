@@ -17,8 +17,8 @@ void main() {
     addTearDown(db.close);
   });
 
-  test('creates every table of schema version 1', () async {
-    expect(db.schemaVersion, 1);
+  test('creates every table of the current schema (version 2)', () async {
+    expect(db.schemaVersion, 2);
     final rows = await db
         .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
         .get();
@@ -125,7 +125,7 @@ void main() {
     final done = op.markDone(at: testTime);
     await journal.update(done);
     await expectLater(
-      journal.update(op.markFailed(at: testTime, error: 'x')),
+      journal.update(op.markFailed(at: testTime, error: const FileGone())),
       throwsStateError,
     );
     expect(await journal.byId(op.id), done);

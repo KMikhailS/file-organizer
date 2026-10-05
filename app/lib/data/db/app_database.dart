@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:file_organizer/data/db/app_database.steps.dart';
 import 'package:file_organizer/data/db/tables.dart';
 
 part 'app_database.g.dart';
@@ -22,16 +23,29 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
-  /// Bump with every schema change and add a migration step below.
+  /// Bump with every schema change, run `dart run drift_dev make-migrations`
+  /// and add a step below.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
-    onUpgrade: (m, from, to) async {
-      // Version 1 is the first one: there is nothing to upgrade from yet.
-      throw StateError('No migration from schema $from to $to');
-    },
+    onUpgrade: stepByStep(
+      from1To2: (m, schema) async {
+        // Sources get the adapter's location; old ones stay empty (unknown).
+        await m.addColumn(schema.sources, schema.sources.location);
+        // Free-text reasons and errors become the `legacy` code with the
+        // original text (see reason_codec.dart).
+        await customStatement(
+          "UPDATE operations SET reason = json_object('code', 'legacy', "
+          "'text', reason)",
+        );
+        await customStatement(
+          "UPDATE operations SET error = json_object('code', 'legacy', "
+          "'text', error) WHERE error IS NOT NULL",
+        );
+      },
+    ),
   );
 }

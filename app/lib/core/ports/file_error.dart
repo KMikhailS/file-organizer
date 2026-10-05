@@ -1,31 +1,7 @@
+import 'package:file_organizer/core/model/file_error_kind.dart';
 import 'package:meta/meta.dart';
 
-/// Why a file operation failed.
-enum FileErrorKind {
-  /// The path (or the quarantine object) does not exist.
-  notFound,
-
-  /// Something already exists at the target. Nothing is ever overwritten.
-  targetExists,
-
-  /// The OS or the user did not grant access.
-  permissionDenied,
-
-  /// The file is in use by another process.
-  locked,
-
-  /// The source cannot do this (see its capabilities).
-  unsupported,
-
-  /// A folder to remove is not empty.
-  notEmpty,
-
-  /// A file was expected but the path is a folder, or the other way round.
-  wrongType,
-
-  /// Any other I/O failure.
-  ioError,
-}
+export 'package:file_organizer/core/model/file_error_kind.dart';
 
 /// A typed file operation error.
 @immutable

@@ -32,6 +32,7 @@ final class DriftSourceRepository implements SourceRepository {
             id: source.id.value,
             kind: source.kind.name,
             displayName: source.displayName,
+            location: source.location,
             canMove: c.canMove,
             canMkdir: c.canMkdir,
             canQuarantine: c.canQuarantine,
@@ -48,6 +49,7 @@ final class DriftSourceRepository implements SourceRepository {
     id: SourceId(row.id),
     kind: SourceKind.values.byName(row.kind),
     displayName: row.displayName,
+    location: row.location,
     capabilities: SourceCapabilities(
       canMove: row.canMove,
       canMkdir: row.canMkdir,

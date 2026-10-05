@@ -1,5 +1,4 @@
 import 'package:file_organizer/core/model/model.dart';
-import 'package:file_organizer/core/ports/ports.dart';
 import 'package:file_organizer/core/undo/undo.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -99,7 +98,7 @@ void main() {
         (e) => e.operation.toPath?.value == 'Фото',
       );
       expect(folder.operation.status, OperationStatus.revertSkipped);
-      expect(folder.operation.error, 'folder is not empty');
+      expect(folder.operation.error, const FolderNotEmpty());
       expect(fs.isDirectory('Фото/2023'), isFalse);
       expect(fs.isDirectory('Фото'), isTrue);
 
@@ -131,7 +130,7 @@ void main() {
       final result = await undo();
       final notes = await op('Download/notes.txt');
       expect(notes.status, OperationStatus.revertSkipped);
-      expect(notes.error, 'the file is not where the cleanup put it');
+      expect(notes.error, const NotWhereCleanupPutIt());
       expect(result.session.status, SessionStatus.partiallyReverted);
       expect(fs.isFile('Download/table.xlsx'), isTrue, reason: 'rest goes on');
     });
@@ -145,11 +144,11 @@ void main() {
       await undo();
       final notes = await op('Download/notes.txt');
       expect(notes.status, OperationStatus.revertSkipped);
-      expect(notes.error, 'the file changed since the cleanup');
+      expect(notes.error, const FileChanged());
       expect(fs.readText('Документы/notes.txt'), 'edited');
       final folder = await op('Документы');
       expect(folder.status, OperationStatus.revertSkipped);
-      expect(folder.error, 'folder is not empty');
+      expect(folder.error, const FolderNotEmpty());
     });
 
     test(
@@ -206,14 +205,14 @@ void main() {
         (e) => e.operation.id == quarantine.id,
       );
       expect(entry.operation.status, OperationStatus.revertSkipped);
-      expect(entry.operation.error, 'the quarantine was purged');
+      expect(entry.operation.error, const QuarantinePurged());
       expect(result.session.status, SessionStatus.partiallyReverted);
     });
 
     test('a folder the user put files into stays', () async {
       fs.addFile('Музыка/mine.mp3');
       await undo();
-      expect((await op('Музыка')).error, 'folder is not empty');
+      expect((await op('Музыка')).error, const FolderNotEmpty());
       expect(fs.isFile('Музыка/mine.mp3'), isTrue);
       expect(fs.isFile('Download/song.mp3'), isTrue);
     });
@@ -269,7 +268,7 @@ void main() {
     final result = await undo();
     final quarantine = await op('Download/b.pdf');
     expect(quarantine.status, OperationStatus.revertSkipped);
-    expect(quarantine.error, 'this source cannot restore from its quarantine');
+    expect(quarantine.error, const CannotRestore());
     expect(fs.isFile('Download/a.pdf'), isTrue, reason: 'the move is undone');
     expect(result.session.status, SessionStatus.partiallyReverted);
   });

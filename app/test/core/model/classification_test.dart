@@ -10,7 +10,7 @@ void main() {
     LogicalPath? subfolder,
     double confidence = 0.9,
     ClassificationOrigin origin = ClassificationOrigin.rule,
-    String reason = 'extension .pdf',
+    ClassificationReason reason = const ByExtension('pdf'),
   }) => Classification(
     category: category,
     subfolder: subfolder,
@@ -25,7 +25,7 @@ void main() {
       'subfolder': classification(subfolder: p('Taxes')),
       'confidence': classification(confidence: 0.5),
       'origin': classification(origin: ClassificationOrigin.ai),
-      'reason': classification(reason: 'other'),
+      'reason': classification(reason: const ScreenshotName()),
     });
   });
 

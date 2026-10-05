@@ -108,7 +108,7 @@ void main() {
 
       final op = await journaled('Download/notes.txt');
       expect(op.status, OperationStatus.skipped);
-      expect(op.error, 'file changed since the scan');
+      expect(op.error, const FileChanged());
       expect(fs.isFile('Download/notes.txt'), isTrue);
       expect(session.stats.skipped, 1);
       expect(session.stats.done, plan.operations.length - 1);
@@ -119,7 +119,7 @@ void main() {
       await execute();
       final op = await journaled('Download/song.mp3');
       expect(op.status, OperationStatus.skipped);
-      expect(op.error, 'file is gone');
+      expect(op.error, const FileGone());
     });
 
     test('a file replaced by a folder', () async {
@@ -127,10 +127,7 @@ void main() {
         ..removeExternally('Download/song.mp3')
         ..addDir('Download/song.mp3');
       await execute();
-      expect(
-        (await journaled('Download/song.mp3')).error,
-        'not a file any more',
-      );
+      expect((await journaled('Download/song.mp3')).error, const NotAFile());
     });
   });
 
@@ -147,7 +144,10 @@ void main() {
 
       final op = await journaled('Download/song.mp3');
       expect(op.status, OperationStatus.failed);
-      expect(op.error, 'ioError: injected');
+      expect(
+        op.error,
+        const FileSystemError(FileErrorKind.ioError, detail: 'injected'),
+      );
       expect(fs.isFile('Download/song.mp3'), isTrue);
       expect(session.status, SessionStatus.completed);
       expect(session.stats.failed, 1);
@@ -159,7 +159,7 @@ void main() {
       await execute();
       final op = await journaled('Download/backup.zip');
       expect(op.status, OperationStatus.failed);
-      expect(op.error, 'locked');
+      expect(op.error, const FileSystemError(FileErrorKind.locked));
     });
 
     test('a target taken after planning is never overwritten', () async {
@@ -168,7 +168,7 @@ void main() {
       expect(fs.readText('Документы/notes.txt'), 'someone else');
       final op = await journaled('Download/notes.txt');
       expect(op.status, OperationStatus.failed);
-      expect(op.error, 'targetExists');
+      expect(op.error, const FileSystemError(FileErrorKind.targetExists));
     });
   });
 
@@ -192,7 +192,7 @@ void main() {
       ]) {
         final op = await journaled(path);
         expect(op.status, OperationStatus.skipped, reason: path);
-        expect(op.error, 'depends on folder фото, which is missing');
+        expect(op.error, DependsOnMissingFolder(LogicalPath('Фото')));
       }
       expect(fs.isFile('Download/photo.png'), isTrue);
       expect(fs.isDirectory('Документы'), isTrue, reason: 'others go on');
@@ -205,7 +205,7 @@ void main() {
       await execute();
       final mkdir = await journaled('Документы');
       expect(mkdir.status, OperationStatus.skipped);
-      expect(mkdir.error, 'folder already exists');
+      expect(mkdir.error, const FolderExists());
       expect(
         (await journaled('Download/notes.txt')).status,
         OperationStatus.done,
@@ -253,7 +253,7 @@ void main() {
       await execute();
       final op = await journaled(copy);
       expect(op.status, OperationStatus.skipped);
-      expect(op.error, 'the copy changed: no longer a duplicate');
+      expect(op.error, const NotADuplicate());
       expect(fs.isFile(copy), isTrue);
     });
 
@@ -262,7 +262,7 @@ void main() {
       await execute();
       final op = await journaled(copy);
       expect(op.status, OperationStatus.skipped);
-      expect(op.error, 'the kept file $kept changed');
+      expect(op.error, KeeperChanged(LogicalPath(kept)));
       expect(fs.isFile(copy), isTrue);
     });
 
@@ -296,7 +296,7 @@ void main() {
       await execute(orphan);
       final op = await journaled(copy);
       expect(op.status, OperationStatus.skipped);
-      expect(op.error, 'not part of a duplicate group');
+      expect(op.error, const NotADuplicate());
       expect(fs.quarantined, isEmpty);
     });
   });
@@ -508,12 +508,16 @@ final class _LoggingSource implements FileSource {
   Future<FileResult<bool>> exists(LogicalPath path) => _inner.exists(path);
 
   @override
-  Future<FileResult<String>> partialHash(LogicalPath path) =>
-      _inner.partialHash(path);
+  Future<FileResult<String>> partialHash(
+    LogicalPath path, {
+    CancelToken? cancel,
+  }) => _inner.partialHash(path, cancel: cancel);
 
   @override
-  Future<FileResult<String>> fullHash(LogicalPath path) =>
-      _inner.fullHash(path);
+  Future<FileResult<String>> fullHash(
+    LogicalPath path, {
+    CancelToken? cancel,
+  }) => _inner.fullHash(path, cancel: cancel);
 
   @override
   Future<FileResult<void>> mkdir(LogicalPath path) =>

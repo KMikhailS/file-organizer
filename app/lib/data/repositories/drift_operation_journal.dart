@@ -3,6 +3,7 @@ import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
 import 'package:file_organizer/data/db/app_database.dart';
 import 'package:file_organizer/data/repositories/converters.dart';
+import 'package:file_organizer/data/repositories/reason_codec.dart';
 
 /// The journal enforces [RepositoryRules] inside transactions, exactly like
 /// the in-memory journal.
@@ -105,10 +106,10 @@ final class DriftOperationJournal implements OperationJournal {
         : toMicros(o.fingerprint!.modifiedAt),
     fingerprintFullHash: o.fingerprint?.fullHash,
     quarantineRef: o.quarantineRef?.value,
-    reason: o.reason,
+    reason: encodeOperationReason(o.reason),
     groupKey: o.groupKey,
     status: o.status.name,
-    error: o.error,
+    error: o.error == null ? null : encodeOperationProblem(o.error!),
     executedAt: o.executedAt == null ? null : toMicros(o.executedAt!),
     revertedAt: o.revertedAt == null ? null : toMicros(o.revertedAt!),
   );
@@ -131,10 +132,10 @@ final class DriftOperationJournal implements OperationJournal {
     quarantineRef: row.quarantineRef == null
         ? null
         : QuarantineRef(row.quarantineRef!),
-    reason: row.reason,
+    reason: decodeOperationReason(row.reason),
     groupKey: row.groupKey,
     status: OperationStatus.values.byName(row.status),
-    error: row.error,
+    error: row.error == null ? null : decodeOperationProblem(row.error!),
     executedAt: fromMicrosOrNull(row.executedAt),
     revertedAt: fromMicrosOrNull(row.revertedAt),
   );
