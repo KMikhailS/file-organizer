@@ -60,6 +60,29 @@ void main() {
           'void removeEmptyDir(String p) { paths.forEach(dir.delete); }',
       'libc rename': "final f = lib.lookupFunction<A, B>('rename');",
       'libc renameat': 'final f = lib.lookupFunction<A, B>("renameat");',
+      'libc renameat in another function':
+          'int moveFile(String a, String b) {\n'
+          "  final f = lib.lookupFunction<A, B>('renameat');\n"
+          '}',
+      'libc renameat after the placeholder function':
+          'int _renameOntoOwnPlaceholder(String a, String b) { return 0; }\n'
+          "final f = lib.lookupFunction<A, B>('renameat');",
+      'libc renameat in a function with a longer name':
+          'int _renameOntoOwnPlaceholder2(String a) {\n'
+          "  lib.lookup('renameat');\n"
+          '}',
+      'libc rename inside the placeholder function':
+          'int _renameOntoOwnPlaceholder(String a, String b) {\n'
+          "  lib.lookup('rename');\n"
+          '}',
+      'File.rename inside the placeholder function':
+          'int _renameOntoOwnPlaceholder(File a, String b) {\n'
+          '  a.renameSync(b);\n'
+          '}',
+      'libc unlink inside the placeholder function':
+          'int _renameOntoOwnPlaceholder(String a, String b) {\n'
+          "  lib.lookup('unlink');\n"
+          '}',
       'libc rename as adjacent strings':
           "final f = lib.lookupFunction<A, B>('ren' 'ame');",
       'libc rename as a raw string': "final f = lib.lookup(r'rename');",
@@ -131,6 +154,11 @@ void main() {
       'generic deletion method':
           'Future<R> purgeQuarantined<R>(QuarantineRef ref) async {\n'
           '  await f.delete();\n'
+          '}',
+      'libc renameat inside _renameOntoOwnPlaceholder':
+          'int _renameOntoOwnPlaceholder(Libc libc, String a, String b) {\n'
+          "  final f = _renameat ??= lib.lookupFunction<A, B>('renameat');\n"
+          '  return f(a, b);\n'
           '}',
       'renameat2 and mkdir':
           "final renameat2 = lib.lookupFunction<A, B>('renameat2');\n"

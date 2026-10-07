@@ -5,6 +5,7 @@ import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/operation.dart';
 import 'package:file_organizer/core/model/operation_problem.dart';
+import 'package:file_organizer/core/model/operation_reason.dart';
 import 'package:file_organizer/core/model/operation_status.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/session_stats.dart';
@@ -43,7 +44,10 @@ final class UndoRun {
 ///
 /// - `move` → moved back, if the file is still where the cleanup put it and
 ///   has the same size and modification time;
-/// - `quarantine` → restored from the quarantine;
+/// - `quarantine` → restored from the quarantine; a [MovePlaceholder] (the
+///   empty placeholder an interrupted move left, quarantined by recovery)
+///   is not restored, since it was not part of the original tree, and only
+///   counts as reverted;
 /// - `mkdir` → the folder is removed if it is empty;
 /// - `addToAlbum` → removed from the album.
 ///
@@ -218,6 +222,9 @@ final class UndoService {
           FileSuccess() => _reverted(op, destination),
           FileFailure(:final error) => _skip(op, _problem(error)),
         };
+
+      case OperationType.quarantine when op.reason is MovePlaceholder:
+        return _reverted(op);
 
       case OperationType.quarantine:
         final ref = op.quarantineRef;

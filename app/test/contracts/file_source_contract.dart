@@ -18,6 +18,10 @@ abstract interface class FileSourceFixture {
 
   /// Creates a folder with parent folders.
   Future<void> givenDir(String path);
+
+  /// Whether the source ignores the case of names (Android shared storage,
+  /// Windows): `a.txt` and `A.TXT` are then the same name.
+  bool get caseInsensitive;
 }
 
 /// Behavior every [FileSource] implementation must have: reading and
@@ -224,6 +228,16 @@ void fileSourceWriteContract(Future<FileSourceFixture> Function() create) {
         FileErrorKind.targetExists,
       );
     });
+
+    test('a name that differs only in case is taken where case is '
+        'ignored', () async {
+      final result = await fs.mkdir(p('DIR'));
+      expect(
+        result.errorKind,
+        fixture.caseInsensitive ? FileErrorKind.targetExists : null,
+      );
+      expect(await exists('dir/b.txt'), isTrue);
+    });
   });
 
   group('move', () {
@@ -273,6 +287,22 @@ void fileSourceWriteContract(Future<FileSourceFixture> Function() create) {
         fs.move(p('nope.txt'), p('x.txt')),
         FileErrorKind.notFound,
       );
+    });
+
+    test('a name that differs only in case is taken where case is '
+        'ignored', () async {
+      final a = await hashOf('a.txt');
+      final b = await hashOf('dir/b.txt');
+      final result = await fs.move(p('dir/b.txt'), p('A.TXT'));
+      if (fixture.caseInsensitive) {
+        expect(result.errorKind, FileErrorKind.targetExists);
+        expect(await hashOf('a.txt'), a);
+        expect(await hashOf('dir/b.txt'), b);
+      } else {
+        expect(result.isSuccess, isTrue);
+        expect(await hashOf('a.txt'), a);
+        expect(await hashOf('A.TXT'), b);
+      }
     });
   });
 

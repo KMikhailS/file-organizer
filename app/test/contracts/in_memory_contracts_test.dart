@@ -17,6 +17,12 @@ void main() {
     fileSourceContract(() async => _InMemoryFixture(pageSize: 100));
   });
 
+  group('InMemoryFileSource, case-insensitive', () {
+    fileSourceContract(
+      () async => _InMemoryFixture(pageSize: 1, caseSensitive: false),
+    );
+  });
+
   group('InMemorySourceRepository', () {
     sourceRepositoryContract(() async => InMemorySourceRepository());
   });
@@ -49,11 +55,17 @@ void main() {
 }
 
 final class _InMemoryFixture implements FileSourceFixture {
-  _InMemoryFixture({required int pageSize})
-    : source = InMemoryFileSource(pageSize: pageSize);
+  _InMemoryFixture({required int pageSize, bool caseSensitive = true})
+    : source = InMemoryFileSource(
+        pageSize: pageSize,
+        caseSensitive: caseSensitive,
+      );
 
   @override
   final InMemoryFileSource source;
+
+  @override
+  bool get caseInsensitive => !source.caseSensitive;
 
   @override
   Future<void> givenFile(

@@ -25,6 +25,10 @@ String encodeOperationReason(OperationReason reason) =>
         'keeper': keeper.value,
       },
       FolderFor(:final folder) => {'code': 'folderFor', 'folder': folder.value},
+      MovePlaceholder(:final file) => {
+        'code': 'movePlaceholder',
+        'file': file.value,
+      },
       LegacyReason(:final text) => {'code': 'legacy', 'text': text},
     });
 
@@ -122,6 +126,9 @@ OperationReason? _operationReason(Map<String, Object?> json) => switch (json) {
   ),
   {'code': 'folderFor', 'folder': final String folder} => FolderFor(
     LogicalPath(folder),
+  ),
+  {'code': 'movePlaceholder', 'file': final String file} => MovePlaceholder(
+    LogicalPath(file),
   ),
   {'code': 'legacy', 'text': final String text} => LegacyReason(text),
   _ => null,

@@ -33,6 +33,8 @@ List<OperationReason> operationReasons() => [
   DuplicateOf(path('Download/b.pdf')),
   FolderFor(path('Download/a.pdf')),
   FolderFor(path('Фото/2024')),
+  MovePlaceholder(path('Download/a.pdf')),
+  MovePlaceholder(path('DCIM/b.jpg')),
   LegacyReason(fresh('extension .pdf')),
   LegacyReason(fresh('duplicate of x')),
 ];

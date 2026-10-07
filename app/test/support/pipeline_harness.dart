@@ -66,6 +66,7 @@ class PipelineHarness {
     journal: journal,
     sessions: sessions,
     clock: clock,
+    ids: executionIds,
   );
 
   late final QuarantinePurger purger = QuarantinePurger(

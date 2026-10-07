@@ -193,6 +193,147 @@ void main() {
     expect((await recover()).recovered.single.status, OperationStatus.skipped);
   });
 
+  group('placeholder of an interrupted move (decision A.5)', () {
+    late Operation move;
+    late DateTime startedAt;
+
+    setUp(() async {
+      await crashOn(
+        InMemoryFileSource()..withTypicalDownloadFolder(),
+        FsMethod.move,
+        CrashPoint.beforeEffect,
+      );
+      move = (await harness.operations(sessionId)).last;
+      startedAt = (await harness.sessions.byId(sessionId))!.startedAt;
+    });
+
+    /// The user's files return; the placeholder stays in the quarantine.
+    Future<void> expectUndoRestoresTheTree() async {
+      final undo = await harness.undo(sessionId);
+      expect(original.tree.diff(fs.snapshot().tree), isEmpty);
+      expect(undo.session.status, SessionStatus.reverted);
+    }
+
+    /// The empty file the fallback "reserve, then rename" leaves when the
+    /// process dies between its two steps.
+    void givenPlaceholder({DateTime? modifiedAt}) => fs.addFile(
+      move.toPath!.value,
+      bytes: const [],
+      modifiedAt: modifiedAt ?? startedAt,
+    );
+
+    test('is quarantined as a new journaled operation', () async {
+      givenPlaceholder();
+      final recovered = (await recover()).recovered;
+      expect(recovered, hasLength(2));
+      expect(recovered.first.status, OperationStatus.skipped);
+
+      final cleared = recovered.last;
+      final journal = await harness.operations(sessionId);
+      expect(journal.last, cleared);
+      expect(cleared.seq, journal[journal.length - 2].seq + 1);
+      expect(cleared.type, OperationType.quarantine);
+      expect(cleared.status, OperationStatus.done);
+      expect(cleared.fromPath, move.toPath);
+      expect(cleared.reason, MovePlaceholder(move.fromPath!));
+      expect(cleared.groupKey, move.groupKey);
+      expect(cleared.fingerprint!.size, 0);
+      expect(fs.isFile(move.toPath!.value), isFalse);
+      expect(fs.quarantined[cleared.quarantineRef!.value], move.toPath);
+      expect(fs.isFile(move.fromPath!.value), isTrue);
+    });
+
+    test('is journaled as pending before it is quarantined', () async {
+      givenPlaceholder();
+      fs.crashOn(methods: {FsMethod.quarantine});
+      await expectLater(recover(), throwsA(isA<SimulatedCrash>()));
+      final last = (await harness.operations(sessionId)).last;
+      expect(last.reason, MovePlaceholder(move.fromPath!));
+      expect(last.status, OperationStatus.pending);
+    });
+
+    for (final point in CrashPoint.values) {
+      test('a recovery that crashed ${point.name} quarantining it is '
+          'finished by the next one', () async {
+        givenPlaceholder();
+        fs.crashOn(methods: {FsMethod.quarantine}, point: point);
+        await expectLater(recover(), throwsA(isA<SimulatedCrash>()));
+        fs.clearFaults();
+
+        await recover();
+        final placeholders = [
+          for (final op in await harness.operations(sessionId))
+            if (op.reason is MovePlaceholder) op,
+        ];
+        expect(placeholders, hasLength(1));
+        expect(fs.isFile(move.toPath!.value), isFalse);
+        await expectUndoRestoresTheTree();
+      });
+    }
+
+    test('undo does not bring it back: the original tree returns', () async {
+      givenPlaceholder();
+      await recover();
+      await expectUndoRestoresTheTree();
+      final cleared = (await harness.operations(sessionId)).last;
+      expect(cleared.status, OperationStatus.reverted);
+      // It stays in the quarantine: undo never deletes.
+      expect(fs.quarantined, {cleared.quarantineRef!.value: move.toPath});
+    });
+
+    test('an empty file older than the session is left alone', () async {
+      givenPlaceholder(
+        modifiedAt: startedAt
+            .subtract(Recovery.placeholderTolerance)
+            .subtract(const Duration(milliseconds: 1)),
+      );
+      expect((await recover()).recovered, hasLength(1));
+      expect(fs.isFile(move.toPath!.value), isTrue);
+    });
+
+    test('a slightly older time is within the tolerance', () async {
+      givenPlaceholder(
+        modifiedAt: startedAt.subtract(Recovery.placeholderTolerance),
+      );
+      expect((await recover()).recovered, hasLength(2));
+    });
+
+    test('a file with content is left alone', () async {
+      fs.addFile(move.toPath!.value, bytes: const [1], modifiedAt: startedAt);
+      expect((await recover()).recovered, hasLength(1));
+      expect(fs.isFile(move.toPath!.value), isTrue);
+    });
+
+    test('a move that happened has no placeholder to clear', () async {
+      fs.clearFaults();
+      await crashOn(
+        InMemoryFileSource()..withTypicalDownloadFolder(),
+        FsMethod.move,
+        CrashPoint.afterEffect,
+      );
+      expect((await recover()).recovered, hasLength(1));
+    });
+  });
+
+  test('without a quarantine the placeholder stays', () async {
+    await crashOn(
+      InMemoryFileSource(
+        capabilities: const SourceCapabilities(canMove: true, canMkdir: true),
+      )..withTypicalDownloadFolder(),
+      FsMethod.move,
+      CrashPoint.beforeEffect,
+    );
+    final move = (await harness.operations(sessionId)).last;
+    final session = (await harness.sessions.byId(sessionId))!;
+    fs.addFile(
+      move.toPath!.value,
+      bytes: const [],
+      modifiedAt: session.startedAt,
+    );
+    expect((await recover()).recovered, hasLength(1));
+    expect(fs.isFile(move.toPath!.value), isTrue);
+  });
+
   test('a session with nothing pending is just closed', () async {
     fs = InMemoryFileSource()..withTypicalDownloadFolder();
     harness = PipelineHarness(fs);

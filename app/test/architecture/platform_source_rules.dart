@@ -5,9 +5,11 @@
 /// the calls that can overwrite or delete them are restricted in the source:
 ///
 /// - `rename` / `renameSync` (they replace an existing target) and the libc
-///   `rename` / `renameat` are forbidden everywhere: moves go only through the
-///   no-replace mechanism of decision A.5, whose "target exists" behavior is
-///   covered by the `FileSource` contract tests;
+///   `rename` are forbidden everywhere: moves go only through the no-replace
+///   mechanism of decision A.5, whose "target exists" behavior is covered by
+///   the `FileSource` contract tests. The libc `renameat` is allowed only
+///   inside the body of `_renameOntoOwnPlaceholder` — the fallback of A.5
+///   renames onto the empty placeholder it has just created and checked;
 /// - deletion (`delete` / `deleteSync`, libc `unlink`, `unlinkat`, `remove`,
 ///   `rmdir`, `truncate`, `ftruncate`) is allowed only inside the bodies of
 ///   `purgeQuarantined` and `removeEmptyDir`, only as a direct call and never
@@ -26,6 +28,13 @@ const Set<String> deletionMethods = {'purgeQuarantined', 'removeEmptyDir'};
 
 /// libc functions that replace an existing target.
 const Set<String> overwritingSymbols = {'rename', 'renameat'};
+
+/// The only function whose body may name a libc function of
+/// [overwritingSymbols], and which one (decision A.5, fallback "reserve the
+/// name, then rename onto the own placeholder").
+const Map<String, String> placeholderRenames = {
+  '_renameOntoOwnPlaceholder': 'renameat',
+};
 
 /// libc functions that delete or destroy file content.
 const Set<String> deletingSymbols = {
@@ -50,9 +59,18 @@ List<Violation> checkPlatformSource({
 }) {
   final code = stripComments(source);
   final blanked = stripComments(source, blankStrings: true);
-  final bodies = _deletionBodies(blanked);
+  final bodies = _bodiesOf(blanked, deletionMethods);
   bool inBody(int offset) =>
       bodies.any((body) => offset >= body.start && offset < body.end);
+  final renameBodies = {
+    for (final MapEntry(key: name, value: symbol) in placeholderRenames.entries)
+      symbol: _bodiesOf(blanked, {name}),
+  };
+  bool inRenameBody(String symbol, int offset) =>
+      renameBodies[symbol]?.any(
+        (body) => offset >= body.start && offset < body.end,
+      ) ??
+      false;
 
   final violations = <Violation>[];
   void report(int offset, String subject, String reason) => violations.add(
@@ -96,7 +114,8 @@ List<Violation> checkPlatformSource({
 
   for (final literal in _stringLiterals(code)) {
     final symbol = literal.value;
-    if (overwritingSymbols.contains(symbol)) {
+    if (overwritingSymbols.contains(symbol) &&
+        !inRenameBody(symbol, literal.start)) {
       report(
         literal.start,
         "'$symbol'",
@@ -131,20 +150,19 @@ final RegExp _member = RegExp(
 /// The `Process` class of `dart:io`.
 final RegExp _process = RegExp(r'(?<![\w$])Process(?![\w$])');
 
-/// Start of a declaration or a call of a deletion method. Qualified calls
+/// Start of a declaration or a call of one of [names]. Qualified calls
 /// (`source.purgeQuarantined(...)`) are excluded by the look-behind.
-final RegExp _deletionName = RegExp(
-  '(?<![\\w\$.])(${deletionMethods.join('|')})\\s*(?:<[^<>]*>\\s*)?\\(',
-);
+RegExp _declarationName(Set<String> names) =>
+    RegExp('(?<![\\w\$.])(${names.join('|')})\\s*(?:<[^<>]*>\\s*)?\\(');
 
 /// What may follow the parameter list of a function declaration.
 final RegExp _bodyStart = RegExp(r'\s*(?:async\*?|sync\*)?\s*(\{|=>)');
 
-/// Offsets of the bodies of [deletionMethods] declared in [code] (comments
-/// stripped, strings blanked).
-List<({int start, int end})> _deletionBodies(String code) {
+/// Offsets of the bodies of the functions or methods [names] declared in
+/// [code] (comments stripped, strings blanked).
+List<({int start, int end})> _bodiesOf(String code, Set<String> names) {
   final bodies = <({int start, int end})>[];
-  for (final match in _deletionName.allMatches(code)) {
+  for (final match in _declarationName(names).allMatches(code)) {
     final parametersEnd = _matching(code, match.end - 1);
     if (parametersEnd == null) {
       continue;

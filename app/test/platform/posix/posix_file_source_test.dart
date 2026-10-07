@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
 import 'package:file_organizer/platform/posix/posix_file_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/fs/posix_sources.dart';
 import '../../support/fs/temp_tree.dart';
 
 /// Behavior of the POSIX adapter beyond the `FileSource` contract
@@ -16,15 +19,8 @@ void main() {
 
   // One item per page by default: a page keeps files and inaccessible
   // folders apart, so only single-item pages show their order.
-  PosixFileSource source({int pageSize = 1}) {
-    final fs = PosixFileSource(
-      sourceId: const SourceId('posix'),
-      root: tree.root,
-      pageSize: pageSize,
-    );
-    addTearDown(fs.dispose);
-    return fs;
-  }
+  Future<PosixFileSource> source({int pageSize = 1}) =>
+      openPosix(tree.root, pageSize: pageSize);
 
   LogicalPath p(String value) => LogicalPath(value);
 
@@ -85,13 +81,13 @@ void main() {
 
     test('is depth first by segment, names by code units', () async {
       givenTrickyNames();
-      expect(await items(source()), expectedOrder);
+      expect(await items(await source()), expectedOrder);
     });
 
     test('pages hold at most pageSize items; the cursor is the last '
         'path', () async {
       givenTrickyNames();
-      final listed = await pages(source(pageSize: 4));
+      final listed = await pages(await source(pageSize: 4));
       expect(listed.every((page) => page.inaccessible.isEmpty), isTrue);
       expect([for (final page in listed) page.entries.length], [4, 4, 1]);
       expect(listed.first.cursor, const ScanCursor('a b/x'));
@@ -101,7 +97,7 @@ void main() {
     for (final pageSize in [1, 2, 3]) {
       test('resumes after every page (page size $pageSize)', () async {
         givenTrickyNames();
-        final fs = source(pageSize: pageSize);
+        final fs = await source(pageSize: pageSize);
         final listed = await pages(fs);
         final seen = <String>[];
         for (final page in listed) {
@@ -118,7 +114,7 @@ void main() {
 
     test('resumes after a cursor whose file is gone', () async {
       givenTrickyNames();
-      final fs = source();
+      final fs = await source();
       tree.remove('a/y');
       expect(await items(fs, after: const ScanCursor('a/y/z')), [
         'a b/x',
@@ -136,7 +132,7 @@ void main() {
         ..file('dir/b.txt')
         ..link('link', 'dir')
         ..file('z.txt');
-      final fs = source();
+      final fs = await source();
       expect(await items(fs), [
         'a.txt',
         'dir/b.txt',
@@ -151,7 +147,7 @@ void main() {
         ..file('dir/b.txt')
         ..file('z.txt');
       await tree.lock('dir');
-      final fs = source();
+      final fs = await source();
       expect(await items(fs), ['dir (inaccessible)', 'z.txt']);
 
       await tree.unlock('dir');
@@ -163,7 +159,7 @@ void main() {
 
     test('does not enter skipped folders, before or after a cursor', () async {
       givenTrickyNames();
-      final fs = source();
+      final fs = await source();
       bool skip(LogicalPath folder) =>
           folder.value == 'a' || folder.value == 'я';
       expect(await items(fs, skipFolder: skip), [
@@ -181,12 +177,12 @@ void main() {
     });
 
     test('an empty source has no pages', () async {
-      expect(await pages(source()), isEmpty);
+      expect(await pages(await source()), isEmpty);
     });
 
     test('a cursor that is not a logical path fails', () async {
       tree.file('a.txt');
-      final results = await source()
+      final results = await (await source())
           .list(after: const ScanCursor('/etc'))
           .toList();
       expect(results.single.errorKind, FileErrorKind.ioError);
@@ -195,21 +191,17 @@ void main() {
     test('reports modification times in UTC with microseconds', () async {
       final time = DateTime.utc(2024, 5, 6, 7, 8, 9, 10, 11);
       tree.file('a.txt', modifiedAt: time.toLocal());
-      final entry = (await pages(source())).single.entries.single;
+      final entry = (await pages(await source())).single.entries.single;
       expect(entry.modifiedAt, time);
       expect(entry.modifiedAt.isUtc, isTrue);
-      final stat = await source().stat(p('a.txt'));
+      final stat = await (await source()).stat(p('a.txt'));
       expect((stat as FileSuccess<FileStat>).value.modifiedAt, time);
     });
   });
 
   group('root', () {
     test('a missing root ends the listing with notFound', () async {
-      final fs = PosixFileSource(
-        sourceId: const SourceId('posix'),
-        root: '${tree.root}/missing',
-      );
-      addTearDown(fs.dispose);
+      final fs = await openPosix('${tree.root}/missing');
       final results = await fs.list().toList();
       expect(results.single.errorKind, FileErrorKind.notFound);
       expect(
@@ -222,22 +214,14 @@ void main() {
     test('a root without access ends the listing', () async {
       tree.dir('locked');
       await tree.lock('locked');
-      final fs = PosixFileSource(
-        sourceId: const SourceId('posix'),
-        root: '${tree.root}/locked',
-      );
-      addTearDown(fs.dispose);
+      final fs = await openPosix('${tree.root}/locked');
       final results = await fs.list().toList();
       expect(results.single.errorKind, FileErrorKind.permissionDenied);
     });
 
     test('a root that is a file ends the listing with wrongType', () async {
       tree.file('file');
-      final fs = PosixFileSource(
-        sourceId: const SourceId('posix'),
-        root: '${tree.root}/file',
-      );
-      addTearDown(fs.dispose);
+      final fs = await openPosix('${tree.root}/file');
       expect(
         (await fs.list().toList()).single.errorKind,
         FileErrorKind.wrongType,
@@ -248,21 +232,14 @@ void main() {
       tree
         ..file('real/dir/a.txt')
         ..link('root-link', 'real');
-      final fs = PosixFileSource(
-        sourceId: const SourceId('posix'),
-        root: '${tree.root}/root-link/',
-      );
-      addTearDown(fs.dispose);
+      final fs = await openPosix('${tree.root}/root-link/');
       expect(await items(fs), ['dir/a.txt']);
       expect((await fs.stat(p('dir/a.txt'))).isSuccess, isTrue);
       expect((await fs.stat(LogicalPath.root)).isSuccess, isTrue);
     });
 
     test('must be absolute', () {
-      expect(
-        () => PosixFileSource(sourceId: const SourceId('x'), root: 'rel'),
-        throwsArgumentError,
-      );
+      expect(openPosix('rel'), throwsArgumentError);
     });
   });
 
@@ -281,7 +258,7 @@ void main() {
 
     test('a link to a file is skipped, a link to a folder is '
         'inaccessible', () async {
-      expect(await items(source()), [
+      expect(await items(await source()), [
         'a.txt',
         'dir/b.txt',
         'dir/out (inaccessible)',
@@ -292,7 +269,7 @@ void main() {
 
     test('stat says wrongType for links; exists says the name is '
         'taken', () async {
-      final fs = source();
+      final fs = await source();
       for (final link in ['file-link', 'dir-link', 'broken']) {
         expect(
           await statError(fs, link),
@@ -305,7 +282,7 @@ void main() {
 
     test('paths behind a link to a folder are not part of the '
         'source', () async {
-      final fs = source();
+      final fs = await source();
       for (final path in ['dir-link/b.txt', 'dir/out/c.txt', 'dir-link/x']) {
         expect(
           await statError(fs, path),
@@ -334,7 +311,7 @@ void main() {
       tree.file('a.txt');
       await tree.fifo('pipe');
       await tree.socket('sock');
-      final fs = source();
+      final fs = await source();
       expect(await items(fs), ['a.txt']);
       for (final name in ['pipe', 'sock']) {
         expect(
@@ -362,12 +339,12 @@ void main() {
     });
 
     test('are reported inaccessible; the rest is listed', () async {
-      final fs = source();
+      final fs = await source();
       expect(await items(fs), ['a.txt', 'locked (inaccessible)', 'z.txt']);
     });
 
     test('are skipped without a report when excluded', () async {
-      final fs = source();
+      final fs = await source();
       expect(await items(fs, skipFolder: (f) => f.value == 'locked'), [
         'a.txt',
         'z.txt',
@@ -376,7 +353,7 @@ void main() {
 
     test('paths inside are permissionDenied, the folder itself is '
         'described', () async {
-      final fs = source();
+      final fs = await source();
       expect(
         (await fs.stat(p('locked'))).isSuccess,
         isTrue,
@@ -404,7 +381,7 @@ void main() {
         ..file('mixed/ok.txt')
         ..rawNamedFile('mixed', const [0x66, 0xff, 0x2e, 0x74]) // f\xff.t
         ..file('z.txt');
-      expect(await items(source()), [
+      expect(await items(await source()), [
         'a.txt',
         'mixed (inaccessible)',
         'mixed/ok.txt',
@@ -414,7 +391,7 @@ void main() {
 
     test('a valid name with U+FFFD is an ordinary file', () async {
       tree.file('mixed/�.txt');
-      expect(await items(source()), ['mixed/�.txt']);
+      expect(await items(await source()), ['mixed/�.txt']);
     });
 
     test('in the root, the root is reported and resuming does not repeat '
@@ -422,7 +399,7 @@ void main() {
       tree
         ..file('a.txt')
         ..rawNamedFile('', const [0xc3, 0x28]);
-      final fs = source();
+      final fs = await source();
       final listed = await pages(fs);
       expect(
         [for (final page in listed) ..._pageItems(page)],
@@ -435,7 +412,7 @@ void main() {
   group('stat and exists', () {
     test('a path under a file does not exist', () async {
       tree.file('a.txt');
-      final fs = source();
+      final fs = await source();
       expect(await statError(fs, 'a.txt/x'), FileErrorKind.notFound);
       expect(await statError(fs, 'a.txt/x/y'), FileErrorKind.notFound);
       expect(await fs.exists(p('a.txt/x')), const FileSuccess(false));
@@ -445,35 +422,19 @@ void main() {
 
     test('folders have size 0', () async {
       tree.file('dir/a.txt', text: 'hello');
-      final stat = await source().stat(p('dir'));
+      final stat = await (await source()).stat(p('dir'));
       expect(stat, isA<FileSuccess<FileStat>>());
       final value = (stat as FileSuccess<FileStat>).value;
       expect((value.kind, value.size), (FileKind.directory, 0));
     });
   });
 
-  group('part I', () {
-    test('reads only: capabilities off, changes unsupported', () async {
+  group('own folder', () {
+    test('is created with .nomedia and never listed', () async {
       tree.file('a.txt');
-      final fs = source();
-      expect(fs.capabilities, SourceCapabilities.none);
+      final fs = await source();
       expect(fs.appFolders, {p('.FileOrganizer')});
-      const session = SessionId('s');
-      final ref = QuarantineRef('s/1');
-      final calls = <Future<FileResult<Object?>>>[
-        fs.mkdir(p('new')),
-        fs.move(p('a.txt'), p('b.txt')),
-        fs.quarantine(p('a.txt'), session),
-        fs.findQuarantined(session, p('a.txt')),
-        fs.restore(ref, p('b.txt')),
-        fs.removeEmptyDir(p('a.txt')),
-        fs.purgeQuarantined(ref),
-        fs.addToAlbum(p('a.txt')),
-        fs.removeFromAlbum(p('a.txt')),
-      ];
-      for (final call in calls) {
-        expect((await call).errorKind, FileErrorKind.unsupported);
-      }
+      expect(File(tree.real('.FileOrganizer/.nomedia')).existsSync(), isTrue);
       expect(await items(fs), ['a.txt']);
     });
   });

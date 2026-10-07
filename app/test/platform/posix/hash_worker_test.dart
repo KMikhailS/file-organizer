@@ -6,6 +6,7 @@ import 'package:file_organizer/platform/posix/hash_worker.dart';
 import 'package:file_organizer/platform/posix/posix_file_source.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/fs/posix_sources.dart';
 import '../../support/fs/temp_tree.dart';
 
 void main() {
@@ -14,8 +15,7 @@ void main() {
 
   setUp(() async {
     tree = await TempTree.create();
-    fs = PosixFileSource(sourceId: const SourceId('posix'), root: tree.root);
-    addTearDown(fs.dispose);
+    fs = await openPosix(tree.root);
   });
 
   LogicalPath p(String value) => LogicalPath(value);
@@ -82,12 +82,7 @@ void main() {
 
     test('does not depend on the block size', () async {
       tree.file('200k', bytes: pattern(200 * 1024));
-      final small = PosixFileSource(
-        sourceId: const SourceId('posix'),
-        root: tree.root,
-        hashBlockSize: 7,
-      );
-      addTearDown(small.dispose);
+      final small = await openPosix(tree.root, hashBlockSize: 7);
       expect(
         await ok(small.fullHash(p('200k'))),
         await ok(fs.fullHash(p('200k'))),

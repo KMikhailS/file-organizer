@@ -85,6 +85,29 @@ final class TempTree {
     _locked.add(real(path));
   }
 
+  /// Makes the folder [path] read-only (`r-x`); writable again before the
+  /// tree is removed.
+  Future<void> makeReadOnly(String path) async {
+    await _chmod('555', real(path));
+    _locked.add(real(path));
+  }
+
+  /// Content of the file at [path], or `null` if there is no file.
+  List<int>? bytesOf(String path) {
+    final file = File(real(path));
+    return file.existsSync() ? file.readAsBytesSync() : null;
+  }
+
+  /// Names in the folder [path], sorted; empty if it does not exist.
+  List<String> namesIn(String path) {
+    final dir = Directory(real(path));
+    if (!dir.existsSync()) {
+      return const [];
+    }
+    return [for (final entity in dir.listSync()) entity.path.split('/').last]
+      ..sort();
+  }
+
   /// Gives the permissions of the folder [path] back.
   Future<void> unlock(String path) async {
     await _chmod('755', real(path));

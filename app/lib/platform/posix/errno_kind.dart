@@ -30,6 +30,12 @@ abstract final class Errno {
   static const int txtBsy = 26;
   static const int roFs = 30;
 
+  // Linux and Android only: the answers of `renameat2` when the file
+  // system does not support its flags.
+  static const int inval = 22;
+  static const int noSys = 38;
+  static const int opNotSupp = 95;
+
   /// `ENOTEMPTY`: 39 on Linux and Android, 66 on macOS.
   static int notEmpty(PosixFlavor flavor) => switch (flavor) {
     PosixFlavor.linux => 39,

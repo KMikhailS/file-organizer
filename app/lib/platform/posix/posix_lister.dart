@@ -24,12 +24,15 @@ import 'package:file_organizer/platform/posix/posix_paths.dart';
 ///   cannot be read are reported as inaccessible. A folder with a name that
 ///   is not valid UTF-8 inside is reported as inaccessible too: its listing
 ///   is incomplete.
+/// - The adapter's own folder in the root ([hiddenRootFolder]) is not
+///   listed: its files are not the user's.
 /// - A missing or unreadable root ends the stream with a failure.
 final class PosixLister {
   PosixLister({
     required this.sourceId,
     required this.paths,
     required this.pageSize,
+    this.hiddenRootFolder,
   }) {
     if (pageSize < 1) {
       throw ArgumentError.value(pageSize, 'pageSize', 'must be positive');
@@ -41,6 +44,10 @@ final class PosixLister {
 
   /// Maximum number of items (files and inaccessible folders) per page.
   final int pageSize;
+
+  /// A folder of the root that is never listed, compared without case (the
+  /// adapter's own folder).
+  final String? hiddenRootFolder;
 
   /// How many entries of one folder are examined at the same time.
   static const int _statBatch = 64;
@@ -196,13 +203,15 @@ final class PosixLister {
     }
 
     final prefix = realDir == '/' ? '/' : '$realDir/';
+    final hidden = dir.isRoot ? hiddenRootFolder?.toLowerCase() : null;
     final children = <_Child>[];
     var incomplete = false;
     for (var i = 0; i < entities.length; i += _statBatch) {
       final batch = entities.skip(i).take(_statBatch);
       final results = await Future.wait([
         for (final entity in batch)
-          _classify(entity, entity.path.substring(prefix.length)),
+          if (entity.path.substring(prefix.length).toLowerCase() != hidden)
+            _classify(entity, entity.path.substring(prefix.length)),
       ]);
       for (final result in results) {
         switch (result) {

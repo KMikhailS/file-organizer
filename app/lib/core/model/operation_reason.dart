@@ -62,6 +62,27 @@ final class FolderFor extends OperationReason {
   String toString() => 'FolderFor($folder)';
 }
 
+/// A quarantine that crash recovery added: the empty placeholder that an
+/// interrupted move of [file] left at its target (decision A.5, fallback
+/// "reserve the name, then rename"). Undo never restores it: the
+/// placeholder was not part of the original tree.
+final class MovePlaceholder extends OperationReason {
+  const MovePlaceholder(this.file);
+
+  /// The file whose move was interrupted (the move's source path).
+  final LogicalPath file;
+
+  @override
+  bool operator ==(Object other) =>
+      other is MovePlaceholder && other.file == file;
+
+  @override
+  int get hashCode => Object.hash(MovePlaceholder, file);
+
+  @override
+  String toString() => 'MovePlaceholder($file)';
+}
+
 /// A reason stored as free text before reasons got codes (database schema
 /// version 1). Never produced by the core.
 final class LegacyReason extends OperationReason {

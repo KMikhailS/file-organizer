@@ -101,6 +101,7 @@ final class CleanupWorkflow {
          journal: repositories.journal,
          sessions: repositories.sessions,
          clock: clock,
+         ids: ids,
        ),
        _purger = QuarantinePurger(
          journal: repositories.journal,
