@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,6 +116,34 @@ void main() {
       'stage': checkpoint(stage: ScanStage.finalizing),
       'cursor': checkpoint(cursor: const ScanCursor('d')),
       'no cursor': checkpoint(cursor: null),
+    });
+  });
+
+  group('CancelToken', () {
+    test('starts active and stays cancelled after cancel', () {
+      final token = CancelToken();
+      expect(token.isCancelled, isFalse);
+      token
+        ..cancel()
+        ..cancel();
+      expect(token.isCancelled, isTrue);
+    });
+
+    test('whenCancelled completes on cancel, not before', () async {
+      final token = CancelToken();
+      var completed = false;
+      unawaited(token.whenCancelled.then((_) => completed = true));
+      await pumpEventQueue();
+      expect(completed, isFalse);
+
+      token.cancel();
+      await pumpEventQueue();
+      expect(completed, isTrue);
+    });
+
+    test('whenCancelled of a cancelled token is already complete', () async {
+      final token = CancelToken()..cancel();
+      await expectLater(token.whenCancelled, completes);
     });
   });
 }

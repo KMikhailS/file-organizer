@@ -19,6 +19,9 @@ dependencies:
   # (docs/stage2_android.md, section 12); used only in lib/platform/ and the
   # A.5 experiment.
   ffi: ^2.2.0
+  # SHA-256 for file hashes (docs/stage2_android.md, section 12); a Dart
+  # team package, used only in lib/platform/.
+  crypto: ^3.0.7
 
 dev_dependencies:
   # Code generation for drift (lib/data/ only).

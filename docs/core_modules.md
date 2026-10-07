@@ -230,9 +230,9 @@ reverted — конечный
 - Неудачный вызов ничего не меняет.
 - Метод, который источник не умеет (см. `capabilities`), возвращает `unsupported`.
 - Виды ошибок `FileErrorKind`: `notFound`, `targetExists`, `permissionDenied`, `locked`, `unsupported`, `notEmpty` (папка не пуста), `wrongType` (ожидался файл, а это папка, или наоборот), `cancelled` (вызов отменён `CancelToken`, ничего не изменилось), `ioError`.
-- `CancelToken` (`core/ports/cancel_token.dart`) — позволяет остановить уже идущее чтение: вызывающий держит токен и вызывает `cancel()`, адаптер проверяет `isCancelled`. Токен одноразовый.
+- `CancelToken` (`core/ports/cancel_token.dart`) — позволяет остановить уже идущее чтение: вызывающий держит токен и вызывает `cancel()`, адаптер проверяет `isCancelled` или ждёт `whenCancelled` (`Future<void>`, завершается при `cancel()`, сразу — если токен уже отменён; нужен, когда чтение идёт в другом изоляте). Повторный `cancel()` ничего не делает. Токен одноразовый.
 
-Поведение порта проверяет контрактный тест `test/contracts/file_source_contract.dart` через сам порт; его прогоняют против `InMemoryFileSource`, а в этапе 2 — против POSIX-адаптера (Linux и Android).
+Поведение порта проверяет контрактный тест `test/contracts/file_source_contract.dart` через сам порт. Он состоит из двух частей: `fileSourceReadContract` (листинг, `stat` / `exists`, хеши, отмена) и `fileSourceWriteContract` (`mkdir`, `move`, карантин, `removeEmptyDir`, альбом); `fileSourceContract` — обе. `InMemoryFileSource` проходит обе части; POSIX-адаптер этапа 2 (`lib/platform/posix/`) — часть чтения на Linux (задача 6), запись — с задачи 7, затем Android.
 
 ### Classifier — классификация
 | Метод | Вход | Выход |
