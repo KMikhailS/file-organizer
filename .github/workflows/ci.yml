@@ -75,6 +75,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
 
+      # The Gradle wrapper and local.properties are not in the repository
+      # (Flutter template); this writes them without building.
+      - name: Gradle configuration
+        run: flutter build apk --config-only
+
       # Catches, among others, calls to APIs newer than minSdk (NewApi).
       - name: Lint
         working-directory: app/android
