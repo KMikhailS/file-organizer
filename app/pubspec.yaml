@@ -32,6 +32,11 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   # In-memory SQLite for the drift repository tests.
   sqlite3: ^3.7.0
+  # Dart <-> Kotlin contract generation (docs/architecture.md; pigeons/).
+  pigeon: ^29.0.7
+  # Tests on Android emulators (integration_test/).
+  integration_test:
+    sdk: flutter
 
 flutter:
   uses-material-design: true
