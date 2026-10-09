@@ -1,9 +1,13 @@
 import 'package:drift/native.dart';
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/data/db/app_database.dart';
+import 'package:file_organizer/data/repositories/drift_repositories.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
 import 'package:file_organizer/platform/android/native_api.g.dart';
 import 'package:file_organizer/state/app_services.dart';
+import 'package:file_organizer/state/providers.dart';
+import 'package:file_organizer/ui/texts/localized_app_texts.dart';
+import 'package:flutter_riverpod/misc.dart';
 
 import 'fake_clock.dart';
 import 'fs/in_memory_file_source.dart';
@@ -108,6 +112,28 @@ final class FakeDevice {
     foreground: foreground,
   );
   late final AppDatabase database = AppDatabase(NativeDatabase.memory());
+
+  /// The languages of the system, most preferred first.
+  List<String> languages = const ['en'];
+
+  /// The overrides of a `ProviderScope` or `ProviderContainer` on this
+  /// device, with the app's own localization.
+  List<Override> get overrides => [
+    appServicesProvider.overrideWithValue(services),
+    appTextsFactoryProvider.overrideWithValue(LocalizedAppTexts.forLanguages),
+    systemLanguagesProvider.overrideWith(() => SystemLanguages(languages)),
+  ];
+
+  /// As if an earlier start fixed the folder names (English by default).
+  Future<void> fixFolderNames([Map<Category, String>? names]) async {
+    final settings = DriftSettingsRepository(database);
+    await settings.save(
+      (await settings.load()).copyWith(
+        layoutFolderNames:
+            names ?? LocalizedAppTexts.forLanguages(const ['en']).folderNames,
+      ),
+    );
+  }
 
   late final AppServices services = AppServices(
     native: native,

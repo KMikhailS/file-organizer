@@ -17,6 +17,13 @@ final class AccessNeeded extends AppStatus {
   const AccessNeeded();
 }
 
+/// The folder names of the template are not fixed yet (the first start).
+/// The user confirms them with `AppController.confirmFolderNames`; the
+/// proposal is `proposedFolderNamesProvider`.
+final class FolderNamesNeeded extends AppStatus {
+  const FolderNamesNeeded();
+}
+
 /// The storage is open and the interrupted sessions are recovered.
 final class AppReady extends AppStatus {
   const AppReady(this.capabilities);

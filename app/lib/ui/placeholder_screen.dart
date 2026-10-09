@@ -1,14 +1,18 @@
 import 'dart:async';
 
+import 'package:file_organizer/core/model/category.dart';
+import 'package:file_organizer/l10n/app_localizations.dart';
 import 'package:file_organizer/state/app_controller.dart';
 import 'package:file_organizer/state/app_status.dart';
 import 'package:file_organizer/state/cleanup_status.dart';
+import 'package:file_organizer/state/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// TEMPORARY screen of stage 2, task 10: the start, the access, and a plan
 /// without applying it, to check the wiring and the life cycle on a device.
-/// Tasks 12–14 replace it with the real screens.
+/// Tasks 12–14 replace it with the real screens. Only the access and the
+/// folder names (task 11) speak the user's language.
 class PlaceholderScreen extends ConsumerStatefulWidget {
   const PlaceholderScreen({super.key});
 
@@ -52,6 +56,7 @@ class _PlaceholderScreenState extends ConsumerState<PlaceholderScreen>
             onGrant: () =>
                 ref.read(appControllerProvider.notifier).requestAccess(),
           ),
+          FolderNamesNeeded() => const _FolderNames(),
           StartupFailed(:final reason) => Text('Could not start: $reason'),
           AppReady() => const _Cleanup(),
         },
@@ -66,17 +71,65 @@ class _AccessNeeded extends StatelessWidget {
   final Future<void> Function() onGrant;
 
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text('The app needs "All files access" to look at your files.'),
-      const SizedBox(height: 16),
-      FilledButton(
-        onPressed: () => unawaited(onGrant()),
-        child: const Text('Grant access'),
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l.accessNeeded),
+        const SizedBox(height: 16),
+        FilledButton(
+          onPressed: () => unawaited(onGrant()),
+          child: Text(l.grantAccess),
+        ),
+      ],
+    );
+  }
+}
+
+/// The folder names proposed on the first start, with "Confirm". Editing
+/// them comes with the onboarding of task 12.
+class _FolderNames extends ConsumerWidget {
+  const _FolderNames();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
+    final names = ref.watch(proposedFolderNamesProvider);
+    // Built in full (not lazily): eight names fit any phone.
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l.folderNamesTitle,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 8),
+          Text(l.folderNamesExplanation),
+          const SizedBox(height: 16),
+          for (final category in Category.values)
+            if (names[category] case final name?)
+              ListTile(
+                leading: const Icon(Icons.folder_outlined),
+                title: Text(name),
+              ),
+          const SizedBox(height: 16),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: FilledButton(
+              onPressed: () => unawaited(
+                ref
+                    .read(appControllerProvider.notifier)
+                    .confirmFolderNames(names),
+              ),
+              child: Text(l.folderNamesConfirm),
+            ),
+          ),
+        ],
       ),
-    ],
-  );
+    );
+  }
 }
 
 class _Cleanup extends ConsumerWidget {

@@ -42,6 +42,11 @@ jobs:
           dart format lib/platform/android/native_api.g.dart
           git diff --exit-code -- .
 
+      - name: Localization code is up to date
+        run: |
+          flutter gen-l10n
+          git diff --exit-code -- .
+
       - name: Format
         run: dart format --output=none --set-exit-if-changed .
 

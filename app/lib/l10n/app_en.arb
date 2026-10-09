@@ -1,0 +1,396 @@
+{
+  "@@locale": "en",
+  "appTitle": "File Organizer",
+  "@appTitle": {
+    "description": "The app name."
+  },
+  "folderDocuments": "Documents",
+  "@folderDocuments": {
+    "description": "Template folder for documents. Fixed on the first start; one folder name, no slashes."
+  },
+  "folderPhotos": "Photos",
+  "@folderPhotos": {
+    "description": "Template folder for photos."
+  },
+  "folderVideos": "Videos",
+  "@folderVideos": {
+    "description": "Template folder for videos."
+  },
+  "folderScreenshots": "Screenshots",
+  "@folderScreenshots": {
+    "description": "Template folder for screenshots."
+  },
+  "folderMusic": "Music",
+  "@folderMusic": {
+    "description": "Template folder for music."
+  },
+  "folderArchives": "Archives",
+  "@folderArchives": {
+    "description": "Template folder for archives."
+  },
+  "folderInstallers": "Installers",
+  "@folderInstallers": {
+    "description": "Template folder for installers (APK)."
+  },
+  "folderOther": "Other",
+  "@folderOther": {
+    "description": "Template folder for other known files."
+  },
+  "restoredLabel": "restored",
+  "@restoredLabel": {
+    "description": "Put into the name of a file that undo brings back next to a taken name: 'photo (restored).jpg'. No slashes."
+  },
+  "internalStorage": "Internal storage",
+  "@internalStorage": {
+    "description": "The shared storage of the phone."
+  },
+  "notificationChannel": "Cleanup progress",
+  "@notificationChannel": {
+    "description": "Name of the notification channel in the system settings."
+  },
+  "progressScanning": "Looking at your files",
+  "@progressScanning": {
+    "description": "Notification title while scanning."
+  },
+  "progressAnalyzing": "Looking for duplicates",
+  "@progressAnalyzing": {
+    "description": "Notification title while looking for duplicates."
+  },
+  "progressExecuting": "Tidying up",
+  "@progressExecuting": {
+    "description": "Notification title while the plan runs."
+  },
+  "progressUndoing": "Undoing the cleanup",
+  "@progressUndoing": {
+    "description": "Notification title while undoing."
+  },
+  "filesCount": "{count, plural, =1{1 file} other{{count} files}}",
+  "@filesCount": {
+    "description": "A number of files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepOf": "{done} of {total}",
+  "@stepOf": {
+    "description": "Progress: done of total.",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reasonDuplicateOf": "Copy of {keeper}",
+  "@reasonDuplicateOf": {
+    "description": "Why a file goes to the quarantine: it is a copy of the kept file.",
+    "placeholders": {
+      "keeper": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonFolderFor": "Needed for {folder}",
+  "@reasonFolderFor": {
+    "description": "Why a folder is created.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "reasonMovePlaceholder": "Empty placeholder left by the interrupted move of {file}",
+  "@reasonMovePlaceholder": {
+    "description": "Why recovery puts an empty file into the quarantine.",
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "classifiedByUserRule": "By your rule",
+  "@classifiedByUserRule": {
+    "description": "Why a file got its folder."
+  },
+  "classifiedByExtension": "By extension .{extension}",
+  "@classifiedByExtension": {
+    "description": "Why a file got its folder.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "classifiedScreenshotName": "The name looks like a screenshot",
+  "@classifiedScreenshotName": {
+    "description": "Why a file got its folder."
+  },
+  "classifiedScreenshotFolder": "Lies in a screenshots folder",
+  "@classifiedScreenshotFolder": {
+    "description": "Why a file got its folder."
+  },
+  "classifiedAiSuggestion": "Suggested by AI",
+  "@classifiedAiSuggestion": {
+    "description": "Why a file got its folder."
+  },
+  "unresolvedUnknownExtension": "Unknown extension .{extension}",
+  "@unresolvedUnknownExtension": {
+    "description": "Why a file stays where it is.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "unresolvedNoExtension": "No extension",
+  "@unresolvedNoExtension": {
+    "description": "Why a file stays where it is."
+  },
+  "unresolvedScreenshotNameNotImage": "Named like a screenshot, but not an image (.{extension})",
+  "@unresolvedScreenshotNameNotImage": {
+    "description": "Why a file stays where it is.",
+    "placeholders": {
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "unresolvedMimeMismatch": "The content ({mimeType}) does not match the extension .{extension}",
+  "@unresolvedMimeMismatch": {
+    "description": "Why a file stays where it is.",
+    "placeholders": {
+      "mimeType": {
+        "type": "String"
+      },
+      "extension": {
+        "type": "String"
+      }
+    }
+  },
+  "problemAt": "{problem}: {path}",
+  "@problemAt": {
+    "description": "A problem with another path than the file's own.",
+    "placeholders": {
+      "problem": {
+        "type": "String"
+      },
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "problemFileGone": "The file is gone",
+  "@problemFileGone": {
+    "description": "Why an operation was skipped."
+  },
+  "problemNotAFile": "This is no longer a file",
+  "@problemNotAFile": {
+    "description": "Why an operation was skipped."
+  },
+  "problemFileChanged": "The file has changed since the scan",
+  "@problemFileChanged": {
+    "description": "Why an operation was skipped."
+  },
+  "problemNotADuplicate": "This is no longer a duplicate",
+  "@problemNotADuplicate": {
+    "description": "Why an operation was skipped."
+  },
+  "problemKeeperChanged": "The kept copy {keeper} has changed or is gone",
+  "@problemKeeperChanged": {
+    "description": "Why an operation was skipped.",
+    "placeholders": {
+      "keeper": {
+        "type": "String"
+      }
+    }
+  },
+  "problemDependsOnMissingFolder": "The folder {folder} could not be created",
+  "@problemDependsOnMissingFolder": {
+    "description": "Why an operation was skipped.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "problemFolderExists": "The folder already exists",
+  "@problemFolderExists": {
+    "description": "Why a folder was not created."
+  },
+  "problemFolderNotEmpty": "The folder is not empty",
+  "@problemFolderNotEmpty": {
+    "description": "Why undo left a folder."
+  },
+  "problemNotWhereCleanupPutIt": "The file is no longer where the cleanup put it",
+  "@problemNotWhereCleanupPutIt": {
+    "description": "Why undo skipped a file."
+  },
+  "problemQuarantinePurged": "The quarantine was emptied: the file cannot come back",
+  "@problemQuarantinePurged": {
+    "description": "Why undo skipped a file."
+  },
+  "problemCannotRestore": "The file cannot be brought back from the quarantine",
+  "@problemCannotRestore": {
+    "description": "Why undo skipped a file."
+  },
+  "problemFolderReplacedByFile": "{folder} is a file now, not a folder",
+  "@problemFolderReplacedByFile": {
+    "description": "Why undo skipped a file.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "problemNoFreeName": "{original} and every \"restored\" name next to it are taken",
+  "@problemNoFreeName": {
+    "description": "Why undo skipped a file.",
+    "placeholders": {
+      "original": {
+        "type": "String"
+      }
+    }
+  },
+  "problemInterrupted": "Interrupted before it took effect",
+  "@problemInterrupted": {
+    "description": "Why an operation did not run."
+  },
+  "problemNeedsAttention": "Needs attention: {cause}",
+  "@problemNeedsAttention": {
+    "description": "Recovery could not sort out an operation.",
+    "placeholders": {
+      "cause": {
+        "type": "String"
+      }
+    }
+  },
+  "problemNeedsAttentionBecause": "Needs attention: {cause} ({error})",
+  "@problemNeedsAttentionBecause": {
+    "description": "Recovery could not sort out an operation; error is the file error behind it.",
+    "placeholders": {
+      "cause": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "attentionFileLost": "the file is neither at its old nor at its new place",
+  "@attentionFileLost": {
+    "description": "Cause of 'needs attention'."
+  },
+  "attentionCannotCheck": "the file could not be checked",
+  "@attentionCannotCheck": {
+    "description": "Cause of 'needs attention'."
+  },
+  "attentionCannotSearchQuarantine": "the quarantine could not be searched",
+  "@attentionCannotSearchQuarantine": {
+    "description": "Cause of 'needs attention'."
+  },
+  "fileErrorNotFound": "Not found",
+  "@fileErrorNotFound": {
+    "description": "A file system error."
+  },
+  "fileErrorTargetExists": "The name is already taken",
+  "@fileErrorTargetExists": {
+    "description": "A file system error."
+  },
+  "fileErrorPermissionDenied": "No access",
+  "@fileErrorPermissionDenied": {
+    "description": "A file system error."
+  },
+  "fileErrorLocked": "In use by another app",
+  "@fileErrorLocked": {
+    "description": "A file system error."
+  },
+  "fileErrorUnsupported": "The storage does not allow this",
+  "@fileErrorUnsupported": {
+    "description": "A file system error."
+  },
+  "fileErrorNotEmpty": "The folder is not empty",
+  "@fileErrorNotEmpty": {
+    "description": "A file system error."
+  },
+  "fileErrorWrongType": "A file where a folder was expected, or the other way round",
+  "@fileErrorWrongType": {
+    "description": "A file system error."
+  },
+  "fileErrorCancelled": "Cancelled",
+  "@fileErrorCancelled": {
+    "description": "A file system error."
+  },
+  "fileErrorIoError": "Read or write error",
+  "@fileErrorIoError": {
+    "description": "A file system error."
+  },
+  "sizeBytes": "{size} B",
+  "@sizeBytes": {
+    "description": "A size in bytes; size is already formatted.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeKilobytes": "{size} KB",
+  "@sizeKilobytes": {
+    "description": "A size in kilobytes (1000 bytes).",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeMegabytes": "{size} MB",
+  "@sizeMegabytes": {
+    "description": "A size in megabytes.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeGigabytes": "{size} GB",
+  "@sizeGigabytes": {
+    "description": "A size in gigabytes.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeTerabytes": "{size} TB",
+  "@sizeTerabytes": {
+    "description": "A size in terabytes.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "accessNeeded": "The app needs \"All files access\" to look at your files.",
+  "@accessNeeded": {
+    "description": "Shown while the access is not granted."
+  },
+  "grantAccess": "Grant access",
+  "@grantAccess": {
+    "description": "Opens the system access screen."
+  },
+  "folderNamesTitle": "Folders for your files",
+  "@folderNamesTitle": {
+    "description": "Title of the folder names confirmation."
+  },
+  "folderNamesExplanation": "The cleanup sorts files into these folders at the top of the storage. Their names stay the same even if you change the language later.",
+  "@folderNamesExplanation": {
+    "description": "Explains the folder names before they are fixed."
+  },
+  "folderNamesConfirm": "Confirm",
+  "@folderNamesConfirm": {
+    "description": "Fixes the folder names."
+  }
+}

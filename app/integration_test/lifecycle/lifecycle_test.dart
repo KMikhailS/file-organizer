@@ -9,6 +9,7 @@ import 'package:file_organizer/state/app_controller.dart';
 import 'package:file_organizer/state/app_services.dart';
 import 'package:file_organizer/state/app_status.dart';
 import 'package:file_organizer/state/providers.dart';
+import 'package:file_organizer/ui/localization.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,10 +29,18 @@ void main() {
   test('a cleanup goes on in the background and the app comes back to '
       'it', () async {
     final container = ProviderContainer(
-      overrides: [appServicesProvider.overrideWithValue(AppServices.android())],
+      overrides: [
+        appServicesProvider.overrideWithValue(AppServices.android()),
+        ...localizationOverrides(),
+      ],
     );
     addTearDown(container.dispose);
-    await container.read(appControllerProvider.notifier).start();
+    final app = container.read(appControllerProvider.notifier);
+    await app.start();
+    // The first start after a clean install asks for the folder names.
+    if (container.read(appControllerProvider) is FolderNamesNeeded) {
+      await app.confirmFolderNames(container.read(proposedFolderNamesProvider));
+    }
     expect(container.read(appControllerProvider), isA<AppReady>());
 
     final lifecycle = <AppLifecycleState>[];

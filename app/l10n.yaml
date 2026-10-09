@@ -1,0 +1,10 @@
+# gen-l10n (docs/stage2_android.md, section 8). The generated Dart files are
+# checked in; CI checks that they are up to date.
+arb-dir: lib/l10n
+output-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# English for languages the app does not have.
+preferred-supported-locales: [en]
+nullable-getter: false

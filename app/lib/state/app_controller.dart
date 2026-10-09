@@ -1,19 +1,22 @@
+import 'package:file_organizer/core/model/category.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/source.dart';
 import 'package:file_organizer/core/model/source_capabilities.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
 import 'package:file_organizer/state/app_status.dart';
-import 'package:file_organizer/state/app_texts.dart';
 import 'package:file_organizer/state/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Starts the app (`docs/stage2_android.md`, section 7): database →
-/// "All files access" → the shared storage source (created on the first
-/// start) is opened → the workflow recovers interrupted sessions and purges
-/// the expired quarantine → the foreground service follows the workflow.
+/// Starts the app (`docs/stage2_android.md`, section 7): database and
+/// settings → "All files access" → the shared storage source (created on
+/// the first start) is opened → the folder names of the template (fixed on
+/// the first start, 3.3) → the workflow recovers interrupted sessions and
+/// purges the expired quarantine → the foreground service follows the
+/// workflow.
 ///
 /// Without access the workflow is not initialized: recovery needs the
-/// source. [requestAccess] or a later [start] picks up from there.
+/// source. [requestAccess] or a later [start] picks up from there; on the
+/// first start [confirmFolderNames] does.
 final class AppController extends Notifier<AppStatus> {
   /// The id of the shared storage source.
   static const SourceId storageId = SourceId('primary-storage');
@@ -35,6 +38,33 @@ final class AppController extends Notifier<AppStatus> {
     await start();
   }
 
+  /// Fixes the folder names of the template on the first start (status
+  /// [FolderNamesNeeded]), then goes on with the start. Throws
+  /// [StateError] in any other status and [ArgumentError] if [names] break
+  /// the template rules (`checkLayoutFolderNames`); nothing is saved then.
+  Future<void> confirmFolderNames(Map<Category, String> names) async {
+    // A start in progress settles the status first.
+    await _starting;
+    if (state is! FolderNamesNeeded) {
+      throw StateError('the folder names are not expected now: $state');
+    }
+    // Taken before the first await: a second confirmation (a double tap)
+    // fails instead of saving other names over these.
+    state = const AppStarting();
+    final settings = ref.read(repositoriesProvider).settings;
+    try {
+      final current = await settings.load();
+      // Only the first confirmation is saved: the names never change.
+      if (current.layoutFolderNames == null) {
+        await settings.save(current.copyWith(layoutFolderNames: names));
+      }
+    } on Object {
+      state = const FolderNamesNeeded();
+      rethrow;
+    }
+    await start();
+  }
+
   Future<void> _start() async {
     if (state is AppReady) {
       return;
@@ -43,6 +73,8 @@ final class AppController extends Notifier<AppStatus> {
     final native = services.native;
     try {
       final repositories = ref.read(repositoriesProvider);
+      final settings = await repositories.settings.load();
+      ref.read(uiLocaleProvider.notifier).set(settings.uiLocale);
       if (await native.hasAllFilesAccess() != const NativeOk(true)) {
         state = const AccessNeeded();
         return;
@@ -63,7 +95,9 @@ final class AppController extends Notifier<AppStatus> {
           Source(
             id: storageId,
             kind: SourceKind.androidFullStorage,
-            displayName: AppTexts.internalStorage,
+            // Not shown: the UI names the source by its kind, in the
+            // current language.
+            displayName: 'Internal storage',
             location: root,
             capabilities: SourceCapabilities.none,
             enabled: true,
@@ -78,6 +112,13 @@ final class AppController extends Notifier<AppStatus> {
           _withCapabilities(source, files.capabilities),
         );
       }
+
+      final folderNames = settings.layoutFolderNames;
+      if (folderNames == null) {
+        state = const FolderNamesNeeded();
+        return;
+      }
+      ref.read(layoutFolderNamesProvider.notifier).fix(folderNames);
 
       if (!_initialized) {
         _initialized = true;

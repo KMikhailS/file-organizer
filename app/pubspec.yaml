@@ -28,6 +28,12 @@ dependencies:
   # Opens the database file in the app's private storage (stage 2,
   # section 12); lib/state/ only.
   drift_flutter: ^0.3.1
+  # Localization ru / en (docs/stage2_android.md, sections 8 and 12):
+  # gen-l10n code in lib/l10n/ and texts in lib/ui/. Both come with the
+  # Flutter SDK, which pins the intl version.
+  flutter_localizations:
+    sdk: flutter
+  intl: any
 
 dev_dependencies:
   # Code generation for drift (lib/data/ only).
@@ -46,3 +52,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # gen-l10n (l10n.yaml) on `flutter pub get`; the output is checked in.
+  generate: true
