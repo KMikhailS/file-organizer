@@ -257,6 +257,36 @@ void main() {
     });
   });
 
+  group('the folder names before the access', () {
+    test('saved names are known even without access (access taken back '
+        'later, not a first start)', () async {
+      await device.fixFolderNames();
+      await controller().start();
+      expect(status(), const AccessNeeded());
+      expect(container.read(layoutFolderNamesProvider), englishNames);
+    });
+
+    test('a first start without access knows no names', () async {
+      await controller().start();
+      expect(status(), const AccessNeeded());
+      expect(container.read(layoutFolderNamesProvider), isNull);
+    });
+
+    test('while confirmed names are saved the status says so', () async {
+      device.access.allFiles = true;
+      await controller().start();
+      final seen = <AppStatus>[];
+      final subscription = container.listen(
+        appControllerProvider,
+        (_, next) => seen.add(next),
+      );
+      addTearDown(subscription.close);
+      await controller().confirmFolderNames(englishNames);
+      expect(seen.first, const FolderNamesNeeded(saving: true));
+      expect(seen.last, isA<AppReady>());
+    });
+  });
+
   group('the language', () {
     test('the one chosen in the settings comes before the system\'s', () async {
       await DriftSettingsRepository(device.database)

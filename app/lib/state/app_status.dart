@@ -21,7 +21,17 @@ final class AccessNeeded extends AppStatus {
 /// The user confirms them with `AppController.confirmFolderNames`; the
 /// proposal is `proposedFolderNamesProvider`.
 final class FolderNamesNeeded extends AppStatus {
-  const FolderNamesNeeded();
+  const FolderNamesNeeded({this.saving = false});
+
+  /// The confirmed names are being saved and the start goes on.
+  final bool saving;
+
+  @override
+  bool operator ==(Object other) =>
+      other is FolderNamesNeeded && other.saving == saving;
+
+  @override
+  int get hashCode => Object.hash(FolderNamesNeeded, saving);
 }
 
 /// The storage is open and the interrupted sessions are recovered.

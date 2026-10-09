@@ -3,8 +3,8 @@ import 'package:file_organizer/state/providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
 
-/// What the temporary screen of task 10 shows about the workflow, and which
-/// of its buttons work. TEMPORARY: the screens of tasks 12–14 replace it.
+/// What the temporary work screen shows about the workflow, and which of
+/// its buttons work. TEMPORARY: the screens of tasks 13–14 replace it.
 @immutable
 final class CleanupStatus {
   const CleanupStatus({
@@ -12,6 +12,7 @@ final class CleanupStatus {
     this.canPlan = false,
     this.canCancel = false,
     this.canDismiss = false,
+    this.atHome = false,
   });
 
   final String text;
@@ -19,13 +20,18 @@ final class CleanupStatus {
   final bool canCancel;
   final bool canDismiss;
 
+  /// The workflow neither works nor holds a result: the home screen shows,
+  /// not the temporary work screen.
+  final bool atHome;
+
   static CleanupStatus of(WorkflowState state) => switch (state) {
-    Idle() => const CleanupStatus(text: 'Ready', canPlan: true),
+    Idle() => const CleanupStatus(text: 'Ready', canPlan: true, atHome: true),
     Interrupted(:final recovered, :final unavailable) => CleanupStatus(
       text:
           'Interrupted cleanup: ${recovered.length} recovered, '
           '${unavailable.length} unavailable',
       canPlan: true,
+      canDismiss: true,
     ),
     Scanning(:final filesProcessed) => CleanupStatus(
       text: 'Scanning: $filesProcessed files',
@@ -46,24 +52,26 @@ final class CleanupStatus {
     Finished() => CleanupStatus(
       text: 'Finished: ${state.runtimeType}',
       canPlan: true,
+      atHome: true,
     ),
     Failed(:final reason) => CleanupStatus(
       text: 'Failed: $reason',
       canPlan: true,
+      canDismiss: true,
     ),
   };
 }
 
-/// The status of the workflow for the temporary screen.
+/// The status of the workflow for the temporary work screen.
 final cleanupStatusProvider = Provider<CleanupStatus>(
   (ref) => switch (ref.watch(workflowStateProvider).value) {
     final state? => CleanupStatus.of(state),
-    null => const CleanupStatus(text: 'Starting'),
+    null => const CleanupStatus(text: 'Starting', atHome: true),
   },
 );
 
-/// The commands of the temporary screen. There is no "apply": this build
-/// never changes files.
+/// The commands of the home and temporary work screens. There is no
+/// "apply" until task 13: this build never changes files.
 final class CleanupActions {
   const CleanupActions(this._workflow);
 

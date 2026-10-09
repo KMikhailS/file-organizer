@@ -373,10 +373,6 @@
       }
     }
   },
-  "accessNeeded": "The app needs \"All files access\" to look at your files.",
-  "@accessNeeded": {
-    "description": "Shown while the access is not granted."
-  },
   "grantAccess": "Grant access",
   "@grantAccess": {
     "description": "Opens the system access screen."
@@ -392,5 +388,236 @@
   "folderNamesConfirm": "Confirm",
   "@folderNamesConfirm": {
     "description": "Fixes the folder names."
+  },
+  "startupFailedTitle": "The app could not start",
+  "@startupFailedTitle": {
+    "description": "Startup error screen."
+  },
+  "startupFailedDetails": "Details: {reason}",
+  "@startupFailedDetails": {
+    "description": "Technical reason of the startup error.",
+    "placeholders": {
+      "reason": {
+        "type": "String"
+      }
+    }
+  },
+  "tryAgain": "Try again",
+  "@tryAgain": {
+    "description": "Retries the start."
+  },
+  "onboardingNext": "Next",
+  "@onboardingNext": {
+    "description": "Next onboarding step."
+  },
+  "introTitle": "Order in your files",
+  "@introTitle": {
+    "description": "Onboarding: first page title."
+  },
+  "introText": "The app finds duplicates and sorts files from Downloads, messengers and other cluttered places into folders.",
+  "@introText": {
+    "description": "Onboarding: what the app does."
+  },
+  "introPlanTitle": "You see the plan first",
+  "@introPlanTitle": {
+    "description": "Onboarding: safety point."
+  },
+  "introPlanText": "Nothing changes until you look through the plan and apply it.",
+  "@introPlanText": {
+    "description": "Onboarding: safety point."
+  },
+  "introQuarantineTitle": "Nothing is deleted",
+  "@introQuarantineTitle": {
+    "description": "Onboarding: safety point."
+  },
+  "introQuarantineText": "Extra copies go to a quarantine folder and can be brought back.",
+  "@introQuarantineText": {
+    "description": "Onboarding: safety point."
+  },
+  "introUndoTitle": "Everything can be undone",
+  "@introUndoTitle": {
+    "description": "Onboarding: safety point."
+  },
+  "introUndoText": "Undo puts every file back where it was.",
+  "@introUndoText": {
+    "description": "Onboarding: safety point."
+  },
+  "accessTitle": "Access to your files",
+  "@accessTitle": {
+    "description": "Onboarding: access step title."
+  },
+  "accessText": "To find duplicates and sort files, the app needs \"All files access\". Android opens its settings: turn the switch on and come back.",
+  "@accessText": {
+    "description": "Onboarding: why the access is needed."
+  },
+  "accessNotGranted": "The access is not granted yet. Without it the app cannot look at your files.",
+  "@accessNotGranted": {
+    "description": "The user came back without granting the access."
+  },
+  "notificationsTitle": "Notifications",
+  "@notificationsTitle": {
+    "description": "Onboarding: notifications step title."
+  },
+  "notificationsText": "A cleanup goes on when you leave the app. A notification shows how far it is.",
+  "@notificationsText": {
+    "description": "Onboarding: why notifications."
+  },
+  "allowNotifications": "Allow notifications",
+  "@allowNotifications": {
+    "description": "Asks for the notification permission."
+  },
+  "notificationsDenied": "Notifications are off. A cleanup still runs, but its progress is not shown outside the app.",
+  "@notificationsDenied": {
+    "description": "The user did not allow notifications."
+  },
+  "continueWithoutNotifications": "Continue without them",
+  "@continueWithoutNotifications": {
+    "description": "Skips the notifications step."
+  },
+  "categoryDocuments": "Documents",
+  "@categoryDocuments": {
+    "description": "Label of a folder name field: what goes there."
+  },
+  "categoryPhotos": "Photos",
+  "@categoryPhotos": {
+    "description": "Label of a folder name field."
+  },
+  "categoryVideos": "Videos",
+  "@categoryVideos": {
+    "description": "Label of a folder name field."
+  },
+  "categoryScreenshots": "Screenshots",
+  "@categoryScreenshots": {
+    "description": "Label of a folder name field."
+  },
+  "categoryMusic": "Music",
+  "@categoryMusic": {
+    "description": "Label of a folder name field."
+  },
+  "categoryArchives": "Archives",
+  "@categoryArchives": {
+    "description": "Label of a folder name field."
+  },
+  "categoryInstallers": "Installers (APK)",
+  "@categoryInstallers": {
+    "description": "Label of a folder name field."
+  },
+  "categoryOther": "Other files",
+  "@categoryOther": {
+    "description": "Label of a folder name field."
+  },
+  "folderNameEmpty": "Enter a name",
+  "@folderNameEmpty": {
+    "description": "Folder name check."
+  },
+  "folderNameTooLong": "At most {max} characters",
+  "@folderNameTooLong": {
+    "description": "Folder name check.",
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "folderNameForbidden": "A name cannot contain {characters}",
+  "@folderNameForbidden": {
+    "description": "Folder name check; characters is a list like / \\ : *.",
+    "placeholders": {
+      "characters": {
+        "type": "String"
+      }
+    }
+  },
+  "folderNameLeadingDot": "A name cannot start with a dot",
+  "@folderNameLeadingDot": {
+    "description": "Folder name check."
+  },
+  "folderNameDuplicate": "This name is already used",
+  "@folderNameDuplicate": {
+    "description": "Folder name check."
+  },
+  "cleanUpButton": "Tidy up",
+  "@cleanUpButton": {
+    "description": "The main button."
+  },
+  "accessRevokedTitle": "No access to your files",
+  "@accessRevokedTitle": {
+    "description": "Home: the access was taken back."
+  },
+  "accessRevokedText": "Grant the access again to tidy up.",
+  "@accessRevokedText": {
+    "description": "Home: the access was taken back."
+  },
+  "lastCleanupNone": "No cleanups yet",
+  "@lastCleanupNone": {
+    "description": "Home: no finished sessions."
+  },
+  "lastCleanupTitle": "Last cleanup: {date}",
+  "@lastCleanupTitle": {
+    "description": "Home: date of the last cleanup.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "sessionCompleted": "Done",
+  "@sessionCompleted": {
+    "description": "Status of a cleanup."
+  },
+  "sessionFailed": "Finished with errors",
+  "@sessionFailed": {
+    "description": "Status of a cleanup."
+  },
+  "sessionCancelled": "Stopped",
+  "@sessionCancelled": {
+    "description": "Status of a cleanup."
+  },
+  "sessionReverted": "Undone: everything is back",
+  "@sessionReverted": {
+    "description": "Status of a cleanup."
+  },
+  "sessionPartiallyReverted": "Partly undone",
+  "@sessionPartiallyReverted": {
+    "description": "Status of a cleanup."
+  },
+  "lastCleanupDone": "{done} of {total} operations done",
+  "@lastCleanupDone": {
+    "description": "Home: counts of the last cleanup.",
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "lastCleanupProblems": "{count, plural, =1{1 operation skipped or failed} other{{count} operations skipped or failed}}",
+  "@lastCleanupProblems": {
+    "description": "Home: problems of the last cleanup.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastCleanupReverted": "{count, plural, =1{1 operation undone} other{{count} operations undone}}",
+  "@lastCleanupReverted": {
+    "description": "Home: undone operations of the last cleanup.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "lastCleanupFreed": "Freed: {size}",
+  "@lastCleanupFreed": {
+    "description": "Home: space freed by the last cleanup.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
   }
 }

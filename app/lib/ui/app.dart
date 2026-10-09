@@ -1,6 +1,6 @@
 import 'package:file_organizer/l10n/app_localizations.dart';
 import 'package:file_organizer/state/providers.dart';
-import 'package:file_organizer/ui/placeholder_screen.dart';
+import 'package:file_organizer/ui/root_screen.dart';
 import 'package:file_organizer/ui/texts/localized_app_texts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -44,6 +44,6 @@ class _FileOrganizerAppState extends ConsumerState<FileOrganizerApp>
     localizationsDelegates: AppLocalizations.localizationsDelegates,
     supportedLocales: AppLocalizations.supportedLocales,
     locale: resolveLanguage(ref.watch(languagesProvider)),
-    home: const PlaceholderScreen(),
+    home: const RootScreen(),
   );
 }

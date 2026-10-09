@@ -482,12 +482,6 @@ abstract class AppLocalizations {
   /// **'{size} TB'**
   String sizeTerabytes(String size);
 
-  /// Shown while the access is not granted.
-  ///
-  /// In en, this message translates to:
-  /// **'The app needs \"All files access\" to look at your files.'**
-  String get accessNeeded;
-
   /// Opens the system access screen.
   ///
   /// In en, this message translates to:
@@ -511,6 +505,288 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Confirm'**
   String get folderNamesConfirm;
+
+  /// Startup error screen.
+  ///
+  /// In en, this message translates to:
+  /// **'The app could not start'**
+  String get startupFailedTitle;
+
+  /// Technical reason of the startup error.
+  ///
+  /// In en, this message translates to:
+  /// **'Details: {reason}'**
+  String startupFailedDetails(String reason);
+
+  /// Retries the start.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
+
+  /// Next onboarding step.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onboardingNext;
+
+  /// Onboarding: first page title.
+  ///
+  /// In en, this message translates to:
+  /// **'Order in your files'**
+  String get introTitle;
+
+  /// Onboarding: what the app does.
+  ///
+  /// In en, this message translates to:
+  /// **'The app finds duplicates and sorts files from Downloads, messengers and other cluttered places into folders.'**
+  String get introText;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'You see the plan first'**
+  String get introPlanTitle;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing changes until you look through the plan and apply it.'**
+  String get introPlanText;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is deleted'**
+  String get introQuarantineTitle;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra copies go to a quarantine folder and can be brought back.'**
+  String get introQuarantineText;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything can be undone'**
+  String get introUndoTitle;
+
+  /// Onboarding: safety point.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo puts every file back where it was.'**
+  String get introUndoText;
+
+  /// Onboarding: access step title.
+  ///
+  /// In en, this message translates to:
+  /// **'Access to your files'**
+  String get accessTitle;
+
+  /// Onboarding: why the access is needed.
+  ///
+  /// In en, this message translates to:
+  /// **'To find duplicates and sort files, the app needs \"All files access\". Android opens its settings: turn the switch on and come back.'**
+  String get accessText;
+
+  /// The user came back without granting the access.
+  ///
+  /// In en, this message translates to:
+  /// **'The access is not granted yet. Without it the app cannot look at your files.'**
+  String get accessNotGranted;
+
+  /// Onboarding: notifications step title.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// Onboarding: why notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'A cleanup goes on when you leave the app. A notification shows how far it is.'**
+  String get notificationsText;
+
+  /// Asks for the notification permission.
+  ///
+  /// In en, this message translates to:
+  /// **'Allow notifications'**
+  String get allowNotifications;
+
+  /// The user did not allow notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off. A cleanup still runs, but its progress is not shown outside the app.'**
+  String get notificationsDenied;
+
+  /// Skips the notifications step.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue without them'**
+  String get continueWithoutNotifications;
+
+  /// Label of a folder name field: what goes there.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get categoryDocuments;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos'**
+  String get categoryPhotos;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Videos'**
+  String get categoryVideos;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Screenshots'**
+  String get categoryScreenshots;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Music'**
+  String get categoryMusic;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Archives'**
+  String get categoryArchives;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Installers (APK)'**
+  String get categoryInstallers;
+
+  /// Label of a folder name field.
+  ///
+  /// In en, this message translates to:
+  /// **'Other files'**
+  String get categoryOther;
+
+  /// Folder name check.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a name'**
+  String get folderNameEmpty;
+
+  /// Folder name check.
+  ///
+  /// In en, this message translates to:
+  /// **'At most {max} characters'**
+  String folderNameTooLong(int max);
+
+  /// Folder name check; characters is a list like / \ : *.
+  ///
+  /// In en, this message translates to:
+  /// **'A name cannot contain {characters}'**
+  String folderNameForbidden(String characters);
+
+  /// Folder name check.
+  ///
+  /// In en, this message translates to:
+  /// **'A name cannot start with a dot'**
+  String get folderNameLeadingDot;
+
+  /// Folder name check.
+  ///
+  /// In en, this message translates to:
+  /// **'This name is already used'**
+  String get folderNameDuplicate;
+
+  /// The main button.
+  ///
+  /// In en, this message translates to:
+  /// **'Tidy up'**
+  String get cleanUpButton;
+
+  /// Home: the access was taken back.
+  ///
+  /// In en, this message translates to:
+  /// **'No access to your files'**
+  String get accessRevokedTitle;
+
+  /// Home: the access was taken back.
+  ///
+  /// In en, this message translates to:
+  /// **'Grant the access again to tidy up.'**
+  String get accessRevokedText;
+
+  /// Home: no finished sessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No cleanups yet'**
+  String get lastCleanupNone;
+
+  /// Home: date of the last cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Last cleanup: {date}'**
+  String lastCleanupTitle(String date);
+
+  /// Status of a cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get sessionCompleted;
+
+  /// Status of a cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Finished with errors'**
+  String get sessionFailed;
+
+  /// Status of a cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get sessionCancelled;
+
+  /// Status of a cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Undone: everything is back'**
+  String get sessionReverted;
+
+  /// Status of a cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Partly undone'**
+  String get sessionPartiallyReverted;
+
+  /// Home: counts of the last cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'{done} of {total} operations done'**
+  String lastCleanupDone(int done, int total);
+
+  /// Home: problems of the last cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 operation skipped or failed} other{{count} operations skipped or failed}}'**
+  String lastCleanupProblems(int count);
+
+  /// Home: undone operations of the last cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 operation undone} other{{count} operations undone}}'**
+  String lastCleanupReverted(int count);
+
+  /// Home: space freed by the last cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Freed: {size}'**
+  String lastCleanupFreed(String size);
 }
 
 class _AppLocalizationsDelegate

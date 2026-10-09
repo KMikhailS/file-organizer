@@ -254,10 +254,6 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get accessNeeded =>
-      'Чтобы просматривать файлы, приложению нужен «Доступ ко всем файлам».';
-
-  @override
   String get grantAccess => 'Дать доступ';
 
   @override
@@ -269,4 +265,185 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get folderNamesConfirm => 'Подтвердить';
+
+  @override
+  String get startupFailedTitle => 'Не удалось запустить приложение';
+
+  @override
+  String startupFailedDetails(String reason) {
+    return 'Подробности: $reason';
+  }
+
+  @override
+  String get tryAgain => 'Повторить';
+
+  @override
+  String get onboardingNext => 'Далее';
+
+  @override
+  String get introTitle => 'Порядок в ваших файлах';
+
+  @override
+  String get introText =>
+      'Приложение находит дубли и раскладывает по папкам файлы из «Загрузок», мессенджеров и других захламлённых мест.';
+
+  @override
+  String get introPlanTitle => 'Сначала — план';
+
+  @override
+  String get introPlanText =>
+      'Ничего не меняется, пока вы не просмотрите план и не примените его.';
+
+  @override
+  String get introQuarantineTitle => 'Ничего не удаляется';
+
+  @override
+  String get introQuarantineText =>
+      'Лишние копии попадают в карантин, и их можно вернуть.';
+
+  @override
+  String get introUndoTitle => 'Всё можно откатить';
+
+  @override
+  String get introUndoText => 'Откат возвращает каждый файл на прежнее место.';
+
+  @override
+  String get accessTitle => 'Доступ к файлам';
+
+  @override
+  String get accessText =>
+      'Чтобы находить дубли и раскладывать файлы, приложению нужен «Доступ ко всем файлам». Android откроет настройки: включите переключатель и вернитесь.';
+
+  @override
+  String get accessNotGranted =>
+      'Доступ пока не выдан. Без него приложение не может просматривать файлы.';
+
+  @override
+  String get notificationsTitle => 'Уведомления';
+
+  @override
+  String get notificationsText =>
+      'Уборка продолжается, даже если выйти из приложения. Уведомление показывает, как она идёт.';
+
+  @override
+  String get allowNotifications => 'Разрешить уведомления';
+
+  @override
+  String get notificationsDenied =>
+      'Уведомления выключены. Уборка всё равно пройдёт, но её ход не будет виден вне приложения.';
+
+  @override
+  String get continueWithoutNotifications => 'Продолжить без них';
+
+  @override
+  String get categoryDocuments => 'Документы';
+
+  @override
+  String get categoryPhotos => 'Фото';
+
+  @override
+  String get categoryVideos => 'Видео';
+
+  @override
+  String get categoryScreenshots => 'Скриншоты';
+
+  @override
+  String get categoryMusic => 'Музыка';
+
+  @override
+  String get categoryArchives => 'Архивы';
+
+  @override
+  String get categoryInstallers => 'Установщики (APK)';
+
+  @override
+  String get categoryOther => 'Другие файлы';
+
+  @override
+  String get folderNameEmpty => 'Введите название';
+
+  @override
+  String folderNameTooLong(int max) {
+    return 'Не больше $max символов';
+  }
+
+  @override
+  String folderNameForbidden(String characters) {
+    return 'В названии не может быть $characters';
+  }
+
+  @override
+  String get folderNameLeadingDot => 'Название не может начинаться с точки';
+
+  @override
+  String get folderNameDuplicate => 'Такое название уже есть';
+
+  @override
+  String get cleanUpButton => 'Навести порядок';
+
+  @override
+  String get accessRevokedTitle => 'Нет доступа к файлам';
+
+  @override
+  String get accessRevokedText =>
+      'Выдайте доступ снова, чтобы навести порядок.';
+
+  @override
+  String get lastCleanupNone => 'Уборок ещё не было';
+
+  @override
+  String lastCleanupTitle(String date) {
+    return 'Последняя уборка: $date';
+  }
+
+  @override
+  String get sessionCompleted => 'Выполнена';
+
+  @override
+  String get sessionFailed => 'Завершена с ошибками';
+
+  @override
+  String get sessionCancelled => 'Остановлена';
+
+  @override
+  String get sessionReverted => 'Отменена: всё возвращено';
+
+  @override
+  String get sessionPartiallyReverted => 'Отменена частично';
+
+  @override
+  String lastCleanupDone(int done, int total) {
+    return 'Выполнено операций: $done из $total';
+  }
+
+  @override
+  String lastCleanupProblems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Пропущено или с ошибкой $count операции',
+      many: 'Пропущено или с ошибкой $count операций',
+      few: 'Пропущены или с ошибкой $count операции',
+      one: 'Пропущена или с ошибкой $count операция',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastCleanupReverted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Отменено $count операции',
+      many: 'Отменено $count операций',
+      few: 'Отменены $count операции',
+      one: 'Отменена $count операция',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastCleanupFreed(String size) {
+    return 'Освобождено: $size';
+  }
 }

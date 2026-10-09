@@ -256,10 +256,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get accessNeeded =>
-      'The app needs \"All files access\" to look at your files.';
-
-  @override
   String get grantAccess => 'Grant access';
 
   @override
@@ -271,4 +267,180 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get folderNamesConfirm => 'Confirm';
+
+  @override
+  String get startupFailedTitle => 'The app could not start';
+
+  @override
+  String startupFailedDetails(String reason) {
+    return 'Details: $reason';
+  }
+
+  @override
+  String get tryAgain => 'Try again';
+
+  @override
+  String get onboardingNext => 'Next';
+
+  @override
+  String get introTitle => 'Order in your files';
+
+  @override
+  String get introText =>
+      'The app finds duplicates and sorts files from Downloads, messengers and other cluttered places into folders.';
+
+  @override
+  String get introPlanTitle => 'You see the plan first';
+
+  @override
+  String get introPlanText =>
+      'Nothing changes until you look through the plan and apply it.';
+
+  @override
+  String get introQuarantineTitle => 'Nothing is deleted';
+
+  @override
+  String get introQuarantineText =>
+      'Extra copies go to a quarantine folder and can be brought back.';
+
+  @override
+  String get introUndoTitle => 'Everything can be undone';
+
+  @override
+  String get introUndoText => 'Undo puts every file back where it was.';
+
+  @override
+  String get accessTitle => 'Access to your files';
+
+  @override
+  String get accessText =>
+      'To find duplicates and sort files, the app needs \"All files access\". Android opens its settings: turn the switch on and come back.';
+
+  @override
+  String get accessNotGranted =>
+      'The access is not granted yet. Without it the app cannot look at your files.';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsText =>
+      'A cleanup goes on when you leave the app. A notification shows how far it is.';
+
+  @override
+  String get allowNotifications => 'Allow notifications';
+
+  @override
+  String get notificationsDenied =>
+      'Notifications are off. A cleanup still runs, but its progress is not shown outside the app.';
+
+  @override
+  String get continueWithoutNotifications => 'Continue without them';
+
+  @override
+  String get categoryDocuments => 'Documents';
+
+  @override
+  String get categoryPhotos => 'Photos';
+
+  @override
+  String get categoryVideos => 'Videos';
+
+  @override
+  String get categoryScreenshots => 'Screenshots';
+
+  @override
+  String get categoryMusic => 'Music';
+
+  @override
+  String get categoryArchives => 'Archives';
+
+  @override
+  String get categoryInstallers => 'Installers (APK)';
+
+  @override
+  String get categoryOther => 'Other files';
+
+  @override
+  String get folderNameEmpty => 'Enter a name';
+
+  @override
+  String folderNameTooLong(int max) {
+    return 'At most $max characters';
+  }
+
+  @override
+  String folderNameForbidden(String characters) {
+    return 'A name cannot contain $characters';
+  }
+
+  @override
+  String get folderNameLeadingDot => 'A name cannot start with a dot';
+
+  @override
+  String get folderNameDuplicate => 'This name is already used';
+
+  @override
+  String get cleanUpButton => 'Tidy up';
+
+  @override
+  String get accessRevokedTitle => 'No access to your files';
+
+  @override
+  String get accessRevokedText => 'Grant the access again to tidy up.';
+
+  @override
+  String get lastCleanupNone => 'No cleanups yet';
+
+  @override
+  String lastCleanupTitle(String date) {
+    return 'Last cleanup: $date';
+  }
+
+  @override
+  String get sessionCompleted => 'Done';
+
+  @override
+  String get sessionFailed => 'Finished with errors';
+
+  @override
+  String get sessionCancelled => 'Stopped';
+
+  @override
+  String get sessionReverted => 'Undone: everything is back';
+
+  @override
+  String get sessionPartiallyReverted => 'Partly undone';
+
+  @override
+  String lastCleanupDone(int done, int total) {
+    return '$done of $total operations done';
+  }
+
+  @override
+  String lastCleanupProblems(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count operations skipped or failed',
+      one: '1 operation skipped or failed',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastCleanupReverted(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count operations undone',
+      one: '1 operation undone',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lastCleanupFreed(String size) {
+    return 'Freed: $size';
+  }
 }

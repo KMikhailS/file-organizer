@@ -7,6 +7,7 @@ import 'package:file_organizer/platform/android/native_api.g.dart';
 import 'package:file_organizer/state/app_services.dart';
 import 'package:file_organizer/state/providers.dart';
 import 'package:file_organizer/ui/texts/localized_app_texts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/misc.dart';
 
 import 'fake_clock.dart';
@@ -35,11 +36,32 @@ final class FakeAccess implements AccessApi {
     return allFiles;
   }
 
-  @override
-  Future<bool> hasNotificationPermission() async => true;
+  /// The notification permission (always granted below Android 13).
+  bool notifications = true;
+
+  /// What the user answers in the system dialog.
+  bool allowNotificationsOnRequest = false;
+  int notificationRequests = 0;
+
+  /// The native calls about notifications fail (a platform error).
+  bool notificationCallsFail = false;
 
   @override
-  Future<bool> requestNotificationPermission() async => true;
+  Future<bool> hasNotificationPermission() async {
+    if (notificationCallsFail) {
+      throw PlatformException(code: 'broken');
+    }
+    return notifications;
+  }
+
+  @override
+  Future<bool> requestNotificationPermission() async {
+    notificationRequests++;
+    if (allowNotificationsOnRequest) {
+      notifications = true;
+    }
+    return notifications;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

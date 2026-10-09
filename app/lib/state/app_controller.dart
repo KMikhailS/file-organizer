@@ -45,12 +45,12 @@ final class AppController extends Notifier<AppStatus> {
   Future<void> confirmFolderNames(Map<Category, String> names) async {
     // A start in progress settles the status first.
     await _starting;
-    if (state is! FolderNamesNeeded) {
+    if (state != const FolderNamesNeeded()) {
       throw StateError('the folder names are not expected now: $state');
     }
     // Taken before the first await: a second confirmation (a double tap)
     // fails instead of saving other names over these.
-    state = const AppStarting();
+    state = const FolderNamesNeeded(saving: true);
     final settings = ref.read(repositoriesProvider).settings;
     try {
       final current = await settings.load();
@@ -75,6 +75,11 @@ final class AppController extends Notifier<AppStatus> {
       final repositories = ref.read(repositoriesProvider);
       final settings = await repositories.settings.load();
       ref.read(uiLocaleProvider.notifier).set(settings.uiLocale);
+      // Known before the access: the UI tells the first start (onboarding)
+      // from access revoked later.
+      if (settings.layoutFolderNames case final names?) {
+        ref.read(layoutFolderNamesProvider.notifier).fix(names);
+      }
       if (await native.hasAllFilesAccess() != const NativeOk(true)) {
         state = const AccessNeeded();
         return;
@@ -113,12 +118,10 @@ final class AppController extends Notifier<AppStatus> {
         );
       }
 
-      final folderNames = settings.layoutFolderNames;
-      if (folderNames == null) {
+      if (settings.layoutFolderNames == null) {
         state = const FolderNamesNeeded();
         return;
       }
-      ref.read(layoutFolderNamesProvider.notifier).fix(folderNames);
 
       if (!_initialized) {
         _initialized = true;
