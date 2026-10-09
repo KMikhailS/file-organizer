@@ -122,7 +122,8 @@ const Layer stateLayer = Layer(
   name: 'state',
   root: 'lib/state/',
   dartLibraries: pureDartLibraries,
-  packages: {...purePackages, 'riverpod', 'flutter_riverpod'},
+  // drift_flutter opens the database file (docs/stage2_android.md, 5.13).
+  packages: {...purePackages, 'riverpod', 'flutter_riverpod', 'drift_flutter'},
   appDirs: ['lib/state/', coreDir, 'lib/data/', 'lib/platform/'],
 );
 

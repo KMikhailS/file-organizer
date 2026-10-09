@@ -1,15 +1,14 @@
+import 'package:file_organizer/state/app_services.dart';
+import 'package:file_organizer/state/providers.dart';
+import 'package:file_organizer/ui/app.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(const FileOrganizerApp());
-}
-
-/// Empty application shell. Screens are added in stage 2.
-class FileOrganizerApp extends StatelessWidget {
-  const FileOrganizerApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(title: 'File Organizer', home: Scaffold());
-  }
+  runApp(
+    ProviderScope(
+      overrides: [appServicesProvider.overrideWithValue(AppServices.android())],
+      child: const FileOrganizerApp(),
+    ),
+  );
 }
