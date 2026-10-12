@@ -54,12 +54,14 @@ void main() {
     String text = 'Starting',
     int done = 0,
     int total = 10,
+    String? cancelLabel,
   }) => ForegroundNotice(
     title: title,
     text: text,
     channelName: 'Cleanup progress',
     done: done,
     total: total,
+    cancelLabel: cancelLabel,
   );
 
   group('storage', () {
@@ -156,6 +158,27 @@ void main() {
     });
   });
 
+  group('thumbnails', () {
+    test('a JPEG from MediaStore for an indexed photo', () async {
+      final bytes = await ok(
+        native.thumbnail('$testRoot/dates/photo.jpg', 192),
+      );
+      expect(bytes, isNotNull);
+      expect(bytes!.length, greaterThan(100));
+      // JPEG start of image.
+      expect(bytes.sublist(0, 2), [0xFF, 0xD8]);
+    });
+
+    test('none for other files and for missing paths', () async {
+      for (final path in [
+        '$testRoot/dates/plain.txt',
+        '$testRoot/dates/missing.jpg',
+      ]) {
+        expect(await ok(native.thumbnail(path, 192)), isNull, reason: path);
+      }
+    });
+  });
+
   group('foreground service', () {
     Future<ForegroundNotice?> shown() => ok(native.currentForegroundNotice());
 
@@ -216,5 +239,20 @@ void main() {
       expect(await running(), isFalse);
       expect(await shown(), isNull);
     });
+
+    test('"Cancel" in the notification reaches Dart; the service keeps '
+        'running until stopped', () async {
+      final cancels = native.foregroundCancels.first.timeout(
+        const Duration(seconds: 60),
+      );
+      await ok(native.startForeground(notice(cancelLabel: 'Cancel')));
+      await eventually(running);
+      await eventually(() async => (await shown())?.cancelLabel == 'Cancel');
+      ask('NOTIFICATION_CANCEL');
+      await cancels;
+      expect(await running(), isTrue);
+      await ok(native.stopForeground());
+      await eventually(() async => !await running());
+    }, timeout: const Timeout(Duration(minutes: 2)));
   });
 }

@@ -71,6 +71,11 @@ class InMemoryFileSource implements FileSource {
   /// test can cancel a token in the middle of a file.
   void Function(LogicalPath path, int block)? onHashBlock;
 
+  /// Awaited before each port call that goes through the fault injection
+  /// (not listings), so a test can hold the work at a call and let it go
+  /// later. Without it the calls do not wait at all.
+  Future<void> Function(FsCall call)? beforeCall;
+
   final Map<String, _Node> _nodes = {};
   final Map<String, _Node> _quarantine = {};
   final Map<String, LogicalPath> _album = {};
@@ -546,6 +551,9 @@ class InMemoryFileSource implements FileSource {
     FsCall call,
     FileResult<T> Function() effect,
   ) async {
+    if (beforeCall case final wait?) {
+      await wait(call);
+    }
     calls.add(call);
     CrashPoint? crash;
     FileError? injected;

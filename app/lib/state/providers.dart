@@ -5,6 +5,7 @@ import 'package:file_organizer/data/db/app_database.dart';
 import 'package:file_organizer/data/repositories/drift_repositories.dart';
 import 'package:file_organizer/state/app_services.dart';
 import 'package:file_organizer/state/app_texts.dart';
+import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
 import 'package:file_organizer/state/foreground_binding.dart';
 import 'package:file_organizer/state/open_sources.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -153,6 +154,7 @@ final foregroundBindingProvider = Provider<ForegroundBinding>((ref) {
     workflow: ref.watch(workflowProvider),
     // The notification follows a change of language at once.
     texts: () => ref.read(appTextsProvider),
+    cancel: () => ref.read(cleanupActionsProvider).cancel(),
   );
   ref.onDispose(binding.dispose);
   return binding;

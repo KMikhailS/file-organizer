@@ -26,6 +26,13 @@ class CleanupService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_CANCEL) {
+            // "Cancel" in the notification: the service runs already (the
+            // action exists only on its notification); Dart cancels the
+            // work, and the service stops when the work does.
+            onCancel?.invoke()
+            return START_NOT_STICKY
+        }
         val notice = latest
         if (notice == null) {
             stopSelf()
@@ -76,6 +83,11 @@ class CleanupService : Service() {
 
         /** Called when the system stops the service for its time limit. */
         var onTimeout: (() -> Unit)? = null
+
+        /** Called when the user taps "Cancel" in the notification. */
+        var onCancel: (() -> Unit)? = null
+
+        private const val ACTION_CANCEL = "com.brobrocode.file_organizer.CANCEL"
 
         private val handler = Handler(Looper.getMainLooper())
         private var latest: ForegroundNotice? = null
@@ -154,6 +166,15 @@ class CleanupService : Service() {
                 .setOnlyAlertOnce(true)
                 .setCategory(Notification.CATEGORY_PROGRESS)
                 .setContentIntent(tap)
+            notice.cancelLabel?.let { label ->
+                val cancel = PendingIntent.getService(
+                    context,
+                    1,
+                    Intent(context, CleanupService::class.java).setAction(ACTION_CANCEL),
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+                builder.addAction(Notification.Action.Builder(null, label, cancel).build())
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 // Android 12+ may delay it by up to 10 s otherwise.
                 builder.setForegroundServiceBehavior(Notification.FOREGROUND_SERVICE_IMMEDIATE)

@@ -68,8 +68,9 @@ final class AndroidNative implements ForegroundEvents {
   final AccessApi _access;
   final StorageApi _storage;
   final ForegroundApi _foreground;
-  // This object answers the native calls while someone listens.
-  late final StreamController<void> _timeouts = StreamController.broadcast(
+  // This object answers the native calls while someone listens to either
+  // stream of events.
+  late final StreamController<_Event> _events = StreamController.broadcast(
     onListen: () => ForegroundEvents.setUp(this),
     onCancel: () => ForegroundEvents.setUp(null),
   );
@@ -115,6 +116,12 @@ final class AndroidNative implements ForegroundEvents {
     };
   }
 
+  /// A JPEG thumbnail (at most [size] pixels on the longer side) of the
+  /// image or video at the absolute [path], made by MediaStore; `null` if
+  /// it has none. Only reads the file.
+  Future<NativeResult<Uint8List?>> thumbnail(String path, int size) =>
+      _call(() => _storage.thumbnail(path, size));
+
   // -------------------------------------------------------- foreground
 
   /// Starts the foreground service with [notice], or updates it.
@@ -136,12 +143,23 @@ final class AndroidNative implements ForegroundEvents {
 
   /// An event each time the system stops the service for its time limit
   /// (Android 15+): the running work should be cancelled.
-  Stream<void> get foregroundTimeouts => _timeouts.stream;
+  Stream<void> get foregroundTimeouts =>
+      _events.stream.where((e) => e == _Event.timeout);
+
+  /// An event each time the user taps "Cancel" in the notification
+  /// (`ForegroundNotice.cancelLabel`).
+  Stream<void> get foregroundCancels =>
+      _events.stream.where((e) => e == _Event.cancel);
 
   /// Called by the native side; use [foregroundTimeouts].
   @override
   @visibleForTesting
-  Future<void> onTimeout() async => _timeouts.add(null);
+  Future<void> onTimeout() async => _events.add(_Event.timeout);
+
+  /// Called by the native side; use [foregroundCancels].
+  @override
+  @visibleForTesting
+  Future<void> onCancelRequested() async => _events.add(_Event.cancel);
 
   static Future<NativeResult<T>> _call<T>(Future<T> Function() call) async {
     try {
@@ -151,3 +169,5 @@ final class AndroidNative implements ForegroundEvents {
     }
   }
 }
+
+enum _Event { timeout, cancel }

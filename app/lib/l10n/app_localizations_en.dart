@@ -443,4 +443,151 @@ class AppLocalizationsEn extends AppLocalizations {
   String lastCleanupFreed(String size) {
     return 'Freed: $size';
   }
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get cancelling => 'Cancelling…';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get progressCanLeave => 'You can leave the app: the work goes on.';
+
+  @override
+  String progressStorageOf(int index, int count) {
+    return 'Storage $index of $count';
+  }
+
+  @override
+  String get planFailedTitle => 'Could not make a plan';
+
+  @override
+  String get planTitle => 'Cleanup plan';
+
+  @override
+  String planSummaryFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files will be tidied up',
+      one: '1 file will be tidied up',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planSummaryFreed(String size) {
+    return '$size will be freed';
+  }
+
+  @override
+  String get planNothingSelected => 'Nothing is selected';
+
+  @override
+  String get planEmptyTitle => 'Everything is in order';
+
+  @override
+  String get planEmptyText => 'There is nothing to tidy up right now.';
+
+  @override
+  String groupDuplicates(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Duplicates: $count files, $size',
+      one: 'Duplicates: 1 file, $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String groupMoveTo(String folder, int count) {
+    return 'To $folder: $count';
+  }
+
+  @override
+  String get groupDuplicatesHint =>
+      'Extra copies go to the quarantine; the copy that stays is named next to each.';
+
+  @override
+  String fileFrom(String folder) {
+    return 'From $folder';
+  }
+
+  @override
+  String get applyButton => 'Apply';
+
+  @override
+  String get declineButton => 'Decline';
+
+  @override
+  String get showFiles => 'Show files';
+
+  @override
+  String get hideFiles => 'Hide files';
+
+  @override
+  String unresolvedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Not sorted: $count files',
+      one: 'Not sorted: 1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unresolvedText =>
+      'The app is not sure where these files belong. They stay where they are.';
+
+  @override
+  String untouchedCopies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count more copies are in your own folders: they stay untouched',
+      one: '1 more copy is in your own folders: it stays untouched',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warningsTitle => 'Not everything could be checked';
+
+  @override
+  String warningInaccessible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count folders could not be read',
+      one: '1 folder could not be read',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warningUnhashed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files could not be read: their duplicates are unknown',
+      one: '1 file could not be read: its duplicates are unknown',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warningUnavailableSources(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count storages were not available',
+      one: '1 storage was not available',
+    );
+    return '$_temp0';
+  }
 }

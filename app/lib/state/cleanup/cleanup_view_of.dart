@@ -1,0 +1,162 @@
+import 'package:file_organizer/core/classify/builtin_rules.dart';
+import 'package:file_organizer/core/classify/rule_classifier.dart';
+import 'package:file_organizer/core/model/category.dart';
+import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation_type.dart';
+import 'package:file_organizer/core/planner/planner.dart';
+import 'package:file_organizer/core/workflow/workflow.dart';
+import 'package:file_organizer/state/cleanup/cleanup_view.dart';
+
+/// The cleanup screens' view of [state] (`null` before the first state).
+/// [cancelling]: "Cancel" was asked for and the work has not stopped yet.
+CleanupView cleanupViewOf(WorkflowState? state, {bool cancelling = false}) =>
+    switch (state) {
+      null || Idle() || Finished() => const AtHome(),
+      Scanning(:final filesProcessed, :final sourceIndex, :final sourceCount) =>
+        InProgress(
+          stage: ProgressStage.scanning,
+          done: filesProcessed,
+          total: 0,
+          sourceIndex: sourceIndex,
+          sourceCount: sourceCount,
+          cancelling: cancelling,
+        ),
+      Analyzing(
+        :final sizesDone,
+        :final sizesTotal,
+        :final sourceIndex,
+        :final sourceCount,
+      ) =>
+        InProgress(
+          stage: ProgressStage.analyzing,
+          done: sizesDone,
+          total: sizesTotal,
+          sourceIndex: sourceIndex,
+          sourceCount: sourceCount,
+          cancelling: cancelling,
+        ),
+      Executing(:final progress, :final sourceIndex, :final sourceCount) =>
+        InProgress(
+          stage: ProgressStage.executing,
+          done: progress?.done ?? 0,
+          total: progress?.total ?? 0,
+          sourceIndex: sourceIndex,
+          sourceCount: sourceCount,
+          cancelling: cancelling,
+        ),
+      Undoing(:final operationsProcessed) => InProgress(
+        stage: ProgressStage.undoing,
+        done: operationsProcessed,
+        total: 0,
+        sourceIndex: 0,
+        sourceCount: 1,
+        cancelling: cancelling,
+      ),
+      PlanReady() => _review(state),
+      Failed(:final reason) => PlanFailed(reason),
+      Interrupted(:final recovered, :final unavailable) => InterruptedCleanup(
+        recovered: recovered.length,
+        unavailable: unavailable.length,
+      ),
+    };
+
+PlanReview _review(PlanReady ready) {
+  final summary = ready.approvedSummary;
+  return PlanReview(
+    sources: ready.plans.map(_source),
+    unavailableSources: ready.unavailable,
+    approvedFiles: summary.fileCount,
+    approvedBytes: summary.reclaimableBytes,
+  );
+}
+
+SourcePlanView _source(SourcePlan sourcePlan) {
+  final plan = sourcePlan.plan;
+  // Groups hold the plan's own operation objects: their indexes by
+  // identity, in one pass (a plan may have tens of thousands).
+  final indexes = Map<Object, int>.identity();
+  for (var i = 0; i < plan.operations.length; i++) {
+    indexes[plan.operations[i]] = i;
+  }
+  final groups = <PlanGroupView>[];
+  final quarantined = <LogicalPath>{};
+  for (final group in plan.groups) {
+    final files = <OperationView>[
+      for (final operation in group.operations)
+        if (operation.type.actsOnFile)
+          OperationView(
+            index: indexes[operation]!,
+            type: operation.type,
+            from: operation.fromPath!,
+            to: operation.type == OperationType.move ? operation.toPath : null,
+            reason: operation.reason,
+            approved: operation.approved,
+            size: operation.fingerprint?.size ?? 0,
+            media: isMediaFile(operation.fromPath!),
+          ),
+    ];
+    if (files.isEmpty) {
+      continue;
+    }
+    if (group.key == Planner.duplicatesGroup) {
+      quarantined.addAll(files.map((f) => f.from));
+    }
+    groups.add(
+      PlanGroupView(
+        key: group.key,
+        kind: groupKind(group.key),
+        bytes: group.summary.reclaimableBytes,
+        files: files,
+      ),
+    );
+  }
+  // Unresolved files never matched a user rule: the built-in rules give
+  // the reason they stay.
+  final rules = RuleClassifier();
+  return SourcePlanView(
+    source: sourcePlan.source,
+    groups: groups,
+    unresolved: [
+      for (final file in plan.unresolved)
+        UnresolvedFile(
+          path: file.path,
+          size: file.size,
+          reason: rules.classifyFile(file).reason,
+        ),
+    ],
+    untouchedCopies: [
+      for (final group in plan.duplicateGroups)
+        for (final copy in group.extras)
+          if (!quarantined.contains(copy.path)) copy,
+    ].length,
+    inaccessibleFolders: sourcePlan.scan.inaccessible,
+    unhashedFiles: sourcePlan.unhashed.map((skip) => skip.path),
+  );
+}
+
+/// The kind of the plan group with [key] (`Planner.duplicatesGroup` or
+/// `Planner.moveGroup`).
+PlanGroupKind groupKind(String key) {
+  if (key == Planner.duplicatesGroup) {
+    return const DuplicatesGroup();
+  }
+  const prefix = 'move:';
+  if (key.startsWith(prefix)) {
+    return MoveGroup(LogicalPath(key.substring(prefix.length)));
+  }
+  throw ArgumentError.value(key, 'key', 'not a group key of the planner');
+}
+
+final Set<String> _mediaExtensions = {
+  ...?BuiltinRules.extensions[Category.photos],
+  ...?BuiltinRules.extensions[Category.videos],
+  ...BuiltinRules.screenshotExtensions,
+};
+
+/// Whether the file at [path] is an image or a video by its extension.
+bool isMediaFile(LogicalPath path) {
+  final name = path.value.split('/').last;
+  final dot = name.lastIndexOf('.');
+  return dot > 0 &&
+      _mediaExtensions.contains(name.substring(dot + 1).toLowerCase());
+}

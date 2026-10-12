@@ -6,6 +6,9 @@
 #   act ALL_FILES_GRANT      settings screen opens -> access granted -> back
 #   act NOTIFICATIONS_DENY   permission dialog -> "Don't allow"
 #   act NOTIFICATIONS_ALLOW  permission dialog -> "Allow"
+#   act NOTIFICATION_CANCEL  notification shade -> "Cancel" of the app's
+#                            notification (title $NOTICE_TITLE, expanded
+#                            if needed) -> shade closed
 
 # The activity in front. Reads the whole output: an early exit of a reader
 # would fail the pipeline under pipefail.
@@ -87,6 +90,58 @@ tap_id() {
   return 1
 }
 
+# The centre "x y" of the first view whose text is $1 (any case: some
+# versions show notification actions in capitals), tried $2 times (20).
+find_text() {
+  for _ in $(seq 1 "${2:-20}"); do
+    "${ADB[@]}" shell uiautomator dump "$UI" >/dev/null 2>&1 || true
+    local bounds
+    bounds=$("${ADB[@]}" shell cat "$UI" | tr -d '\r' |
+      grep -io "text=\"$1\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" |
+      grep -o 'bounds="[^"]*"' | sed -n 1p || true)
+    if [ -n "$bounds" ]; then
+      local x1 y1 x2 y2
+      read -r x1 y1 x2 y2 < <(echo "$bounds" | grep -o '[0-9]*' | tr '\n' ' ')
+      echo "$(((x1 + x2) / 2)) $(((y1 + y2) / 2))"
+      return 0
+    fi
+    sleep 0.5
+  done
+  "${ADB[@]}" pull "$UI" build/ui_dump.xml >/dev/null 2>&1 || true
+  return 1
+}
+
+# Taps the first view whose text is $1 (see find_text).
+tap_text() {
+  local at
+  if at=$(find_text "$1" "${2:-20}"); then
+    # shellcheck disable=SC2086 # "x y" are two arguments.
+    "${ADB[@]}" shell input tap $at
+    return 0
+  fi
+  say "no view with text $1 on screen (dump: build/ui_dump.xml)"
+  return 1
+}
+
+# The title of the app's notification for NOTIFICATION_CANCEL.
+NOTICE_TITLE=${NOTICE_TITLE:-Cleaning up}
+
+# Waits for the "All files access" settings screen and keeps it in SCREEN.
+# Newer versions open it through a short-lived trampoline activity of the
+# same package, so it waits until the same settings activity stays in
+# front for a second.
+settings_front() {
+  wait_front 'com\.android\.settings'
+  local first
+  for _ in $(seq 1 10); do
+    first=$SCREEN
+    sleep 1
+    wait_front 'com\.android\.settings'
+    [ "$SCREEN" = "$first" ] && return 0
+  done
+  return 0
+}
+
 # Taps the button $1 of the dialog found by wait_front until that dialog
 # goes: a tap while it is still opening is lost.
 answer() {
@@ -106,11 +161,10 @@ act() {
   dismiss_anr
   case $1 in
     ALL_FILES_BACK)
-      wait_front 'com\.android\.settings'
-      sleep 1
+      settings_front
       leave ;;
     ALL_FILES_GRANT)
-      wait_front 'com\.android\.settings'
+      settings_front
       "${ADB[@]}" shell appops set --uid "$APP" MANAGE_EXTERNAL_STORAGE allow
       sleep 1
       leave ;;
@@ -120,6 +174,24 @@ act() {
     NOTIFICATIONS_ALLOW)
       wait_front 'permissioncontroller'
       answer 'permission_allow_button' ;;
+    NOTIFICATION_CANCEL)
+      "${ADB[@]}" shell cmd statusbar expand-notifications
+      sleep 1
+      local tapped=0 at
+      if ! tap_text 'Cancel' 4 2>/dev/null; then
+        # Newer versions show it collapsed, without its actions: a swipe
+        # down on its title expands it.
+        if at=$(find_text "$NOTICE_TITLE"); then
+          read -r x y <<<"$at"
+          "${ADB[@]}" shell input swipe "$x" "$y" "$x" $((y + 500)) 300
+          sleep 1
+        fi
+        tap_text 'Cancel' && tapped=1
+      else
+        tapped=1
+      fi
+      "${ADB[@]}" shell cmd statusbar collapse
+      [ "$tapped" = 1 ] || return 1 ;;
     *) say "unknown action $1"; return 1 ;;
   esac
   say "done: $1"

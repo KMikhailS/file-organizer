@@ -29,6 +29,7 @@ class ForegroundNotice {
     required this.channelName,
     required this.done,
     required this.total,
+    this.cancelLabel,
   });
 
   String title;
@@ -40,6 +41,9 @@ class ForegroundNotice {
   /// Progress: [done] of [total]; `total == 0` shows an indeterminate bar.
   int done;
   int total;
+
+  /// The label of the "Cancel" action, or `null` for no action.
+  String? cancelLabel;
 }
 
 /// "All files access" and the notification permission. Runs on the main
@@ -78,6 +82,13 @@ abstract class StorageApi {
   /// media, not indexed) are missing from the answer.
   @TaskQueue(type: TaskQueueType.serialBackgroundThread)
   Map<String, int> capturedDates(List<String> paths);
+
+  /// A JPEG thumbnail of the image or video at the absolute [path], at most
+  /// [size] pixels on its longer side, made by MediaStore (which caches
+  /// it); `null` if MediaStore does not know the file or cannot make one.
+  /// Only reads.
+  @TaskQueue(type: TaskQueueType.serialBackgroundThread)
+  Uint8List? thumbnail(String path, int size);
 }
 
 /// The foreground service (type `dataSync`) that keeps a scan, cleanup or
@@ -96,8 +107,8 @@ abstract class ForegroundApi {
 
   bool isRunning();
 
-  /// What the notification shows now (read back from the system), or
-  /// `null` if there is none.
+  /// What the notification shows now (read back from the system, the
+  /// cancel label from its action), or `null` if there is none.
   ForegroundNotice? currentNotice();
 }
 
@@ -108,4 +119,8 @@ abstract class ForegroundEvents {
   /// 15+ ran out. The work in progress should be cancelled.
   @asyncCallback
   void onTimeout();
+
+  /// The user tapped "Cancel" in the notification.
+  @asyncCallback
+  void onCancelRequested();
 }

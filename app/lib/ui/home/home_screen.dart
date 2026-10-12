@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:file_organizer/l10n/app_localizations.dart';
 import 'package:file_organizer/state/app_controller.dart';
 import 'package:file_organizer/state/app_status.dart';
-import 'package:file_organizer/state/cleanup_status.dart';
+import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
 import 'package:file_organizer/ui/home/last_cleanup_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

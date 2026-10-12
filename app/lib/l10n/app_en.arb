@@ -619,5 +619,177 @@
         "type": "String"
       }
     }
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Stops the running work; also the action of the notification."
+  },
+  "cancelling": "Cancelling…",
+  "@cancelling": {
+    "description": "Shown after Cancel until the work stops."
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Goes back to the home screen."
+  },
+  "progressCanLeave": "You can leave the app: the work goes on.",
+  "@progressCanLeave": {
+    "description": "Progress screen hint."
+  },
+  "progressStorageOf": "Storage {index} of {count}",
+  "@progressStorageOf": {
+    "description": "Which source is scanned.",
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planFailedTitle": "Could not make a plan",
+  "@planFailedTitle": {
+    "description": "The pipeline failed."
+  },
+  "planTitle": "Cleanup plan",
+  "@planTitle": {
+    "description": "Plan screen title."
+  },
+  "planSummaryFiles": "{count, plural, =1{1 file will be tidied up} other{{count} files will be tidied up}}",
+  "@planSummaryFiles": {
+    "description": "Plan summary: approved files.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "planSummaryFreed": "{size} will be freed",
+  "@planSummaryFreed": {
+    "description": "Plan summary: bytes freed by approved duplicates.",
+    "placeholders": {
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "planNothingSelected": "Nothing is selected",
+  "@planNothingSelected": {
+    "description": "No operation approved."
+  },
+  "planEmptyTitle": "Everything is in order",
+  "@planEmptyTitle": {
+    "description": "Empty plan."
+  },
+  "planEmptyText": "There is nothing to tidy up right now.",
+  "@planEmptyText": {
+    "description": "Empty plan."
+  },
+  "groupDuplicates": "{count, plural, =1{Duplicates: 1 file, {size}} other{Duplicates: {count} files, {size}}}",
+  "@groupDuplicates": {
+    "description": "Plan group of duplicates.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "groupMoveTo": "To {folder}: {count}",
+  "@groupMoveTo": {
+    "description": "Plan group of moves; folder like 'Photos / 2024'.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupDuplicatesHint": "Extra copies go to the quarantine; the copy that stays is named next to each.",
+  "@groupDuplicatesHint": {
+    "description": "Explains the duplicates group."
+  },
+  "fileFrom": "From {folder}",
+  "@fileFrom": {
+    "description": "Where a file of the plan lies now.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "applyButton": "Apply",
+  "@applyButton": {
+    "description": "Executes the approved plan."
+  },
+  "declineButton": "Decline",
+  "@declineButton": {
+    "description": "Declines the plan."
+  },
+  "showFiles": "Show files",
+  "@showFiles": {
+    "description": "Expands a plan group."
+  },
+  "hideFiles": "Hide files",
+  "@hideFiles": {
+    "description": "Collapses a plan group."
+  },
+  "unresolvedTitle": "{count, plural, =1{Not sorted: 1 file} other{Not sorted: {count} files}}",
+  "@unresolvedTitle": {
+    "description": "Files the rules could not classify.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unresolvedText": "The app is not sure where these files belong. They stay where they are.",
+  "@unresolvedText": {
+    "description": "Explains unresolved files."
+  },
+  "untouchedCopies": "{count, plural, =1{1 more copy is in your own folders: it stays untouched} other{{count} more copies are in your own folders: they stay untouched}}",
+  "@untouchedCopies": {
+    "description": "Duplicates outside cluttered places.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warningsTitle": "Not everything could be checked",
+  "@warningsTitle": {
+    "description": "Plan warnings."
+  },
+  "warningInaccessible": "{count, plural, =1{1 folder could not be read} other{{count} folders could not be read}}",
+  "@warningInaccessible": {
+    "description": "Plan warning.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warningUnhashed": "{count, plural, =1{1 file could not be read: its duplicates are unknown} other{{count} files could not be read: their duplicates are unknown}}",
+  "@warningUnhashed": {
+    "description": "Plan warning.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "warningUnavailableSources": "{count, plural, =1{1 storage was not available} other{{count} storages were not available}}",
+  "@warningUnavailableSources": {
+    "description": "Plan warning.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

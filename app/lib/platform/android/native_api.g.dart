@@ -120,6 +120,7 @@ class ForegroundNotice {
     required this.channelName,
     required this.done,
     required this.total,
+    this.cancelLabel,
   });
 
   String title;
@@ -134,8 +135,11 @@ class ForegroundNotice {
 
   int total;
 
+  /// The label of the "Cancel" action, or `null` for no action.
+  String? cancelLabel;
+
   List<Object?> _toList() {
-    return <Object?>[title, text, channelName, done, total];
+    return <Object?>[title, text, channelName, done, total, cancelLabel];
   }
 
   Object encode() {
@@ -150,6 +154,7 @@ class ForegroundNotice {
       channelName: result[2]! as String,
       done: result[3]! as int,
       total: result[4]! as int,
+      cancelLabel: result[5] as String?,
     );
   }
 
@@ -166,7 +171,8 @@ class ForegroundNotice {
         _deepEquals(text, other.text) &&
         _deepEquals(channelName, other.channelName) &&
         _deepEquals(done, other.done) &&
-        _deepEquals(total, other.total);
+        _deepEquals(total, other.total) &&
+        _deepEquals(cancelLabel, other.cancelLabel);
   }
 
   @override
@@ -175,7 +181,7 @@ class ForegroundNotice {
 
   @override
   String toString() {
-    return 'ForegroundNotice(title: $title, text: $text, channelName: $channelName, done: $done, total: $total)';
+    return 'ForegroundNotice(title: $title, text: $text, channelName: $channelName, done: $done, total: $total, cancelLabel: $cancelLabel)';
   }
 }
 
@@ -371,6 +377,31 @@ class StorageApi {
     );
     return (pigeonVar_replyValue! as Map<Object?, Object?>).cast<String, int>();
   }
+
+  /// A JPEG thumbnail of the image or video at the absolute [path], at most
+  /// [size] pixels on its longer side, made by MediaStore (which caches
+  /// it); `null` if MediaStore does not know the file or cannot make one.
+  /// Only reads.
+  Future<Uint8List?> thumbnail(String path, int size) async {
+    final pigeonVar_channelName =
+        'dev.flutter.pigeon.file_organizer.StorageApi.thumbnail$pigeonVar_messageChannelSuffix';
+    final pigeonVar_channel = BasicMessageChannel<Object?>(
+      pigeonVar_channelName,
+      pigeonChannelCodec,
+      binaryMessenger: pigeonVar_binaryMessenger,
+    );
+    final Future<Object?> pigeonVar_sendFuture = pigeonVar_channel.send(
+      <Object?>[path, size],
+    );
+    final pigeonVar_replyList = await pigeonVar_sendFuture as List<Object?>?;
+
+    final Object? pigeonVar_replyValue = _extractReplyValueOrThrow(
+      pigeonVar_replyList,
+      pigeonVar_channelName,
+      isNullValid: true,
+    );
+    return pigeonVar_replyValue as Uint8List?;
+  }
 }
 
 /// The foreground service (type `dataSync`) that keeps a scan, cleanup or
@@ -473,8 +504,8 @@ class ForegroundApi {
     return pigeonVar_replyValue! as bool;
   }
 
-  /// What the notification shows now (read back from the system), or
-  /// `null` if there is none.
+  /// What the notification shows now (read back from the system, the
+  /// cancel label from its action), or `null` if there is none.
   Future<ForegroundNotice?> currentNotice() async {
     final pigeonVar_channelName =
         'dev.flutter.pigeon.file_organizer.ForegroundApi.currentNotice$pigeonVar_messageChannelSuffix';
@@ -503,6 +534,9 @@ abstract class ForegroundEvents {
   /// 15+ ran out. The work in progress should be cancelled.
   Future<void> onTimeout();
 
+  /// The user tapped "Cancel" in the notification.
+  Future<void> onCancelRequested();
+
   static void setUp(
     ForegroundEvents? api, {
     BinaryMessenger? binaryMessenger,
@@ -523,6 +557,29 @@ abstract class ForegroundEvents {
         pigeonVar_channel.setMessageHandler((Object? message) async {
           try {
             await api.onTimeout();
+            return wrapResponse(empty: true);
+          } on PlatformException catch (e) {
+            return wrapResponse(error: e);
+          } catch (e) {
+            return wrapResponse(
+              error: PlatformException(code: 'error', message: e.toString()),
+            );
+          }
+        });
+      }
+    }
+    {
+      final pigeonVar_channel = BasicMessageChannel<Object?>(
+        'dev.flutter.pigeon.file_organizer.ForegroundEvents.onCancelRequested$messageChannelSuffix',
+        pigeonChannelCodec,
+        binaryMessenger: binaryMessenger,
+      );
+      if (api == null) {
+        pigeonVar_channel.setMessageHandler(null);
+      } else {
+        pigeonVar_channel.setMessageHandler((Object? message) async {
+          try {
+            await api.onCancelRequested();
             return wrapResponse(empty: true);
           } on PlatformException catch (e) {
             return wrapResponse(error: e);

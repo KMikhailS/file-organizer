@@ -1,44 +1,43 @@
 import 'dart:async';
 
-import 'package:file_organizer/state/cleanup_status.dart';
+import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
+import 'package:file_organizer/state/cleanup/cleanup_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// TEMPORARY (decision of task 12, `docs/stage2_android.md`, 5.17): what
-/// the workflow does after "Tidy up", with "Cancel" and "Dismiss"; there is
-/// no "Apply". The progress and plan screens of task 13 and the result and
-/// interrupted-cleanup screens of task 14 replace it. Not localized.
+/// TEMPORARY (`docs/stage2_android.md`, 5.19): the interrupted cleanup
+/// found at start-up, with "Make a plan" (finish the job) and "Dismiss".
+/// The screen of task 14 ("finish" or "undo") replaces it. Not localized.
 class TemporaryWorkScreen extends ConsumerWidget {
-  const TemporaryWorkScreen({super.key});
+  const TemporaryWorkScreen({required this.interrupted, super.key});
+
+  final InterruptedCleanup interrupted;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(cleanupStatusProvider);
     final actions = ref.read(cleanupActionsProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Cleanup (preview)')),
+      appBar: AppBar(title: const Text('Interrupted cleanup (preview)')),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(status.text, style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Interrupted cleanup: ${interrupted.recovered} recovered, '
+              '${interrupted.unavailable} unavailable',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 16),
             Wrap(
               spacing: 12,
               children: [
                 FilledButton(
-                  onPressed: status.canPlan
-                      ? () => unawaited(actions.plan())
-                      : null,
+                  onPressed: () => unawaited(actions.plan()),
                   child: const Text('Make a plan'),
                 ),
                 OutlinedButton(
-                  onPressed: status.canCancel ? actions.cancel : null,
-                  child: const Text('Cancel'),
-                ),
-                OutlinedButton(
-                  onPressed: status.canDismiss ? actions.dismiss : null,
+                  onPressed: actions.dismiss,
                   child: const Text('Dismiss'),
                 ),
               ],

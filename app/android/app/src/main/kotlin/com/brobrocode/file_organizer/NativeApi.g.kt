@@ -208,7 +208,9 @@ data class ForegroundNotice (
   val channelName: String,
   /** Progress: [done] of [total]; `total == 0` shows an indeterminate bar. */
   val done: Long,
-  val total: Long
+  val total: Long,
+  /** The label of the "Cancel" action, or `null` for no action. */
+  val cancelLabel: String? = null
 )
  {
   companion object {
@@ -218,7 +220,8 @@ data class ForegroundNotice (
       val channelName = pigeonVar_list[2] as String
       val done = pigeonVar_list[3] as Long
       val total = pigeonVar_list[4] as Long
-      return ForegroundNotice(title, text, channelName, done, total)
+      val cancelLabel = pigeonVar_list[5] as String?
+      return ForegroundNotice(title, text, channelName, done, total, cancelLabel)
     }
   }
   fun toList(): List<Any?> {
@@ -228,6 +231,7 @@ data class ForegroundNotice (
       channelName,
       done,
       total,
+      cancelLabel,
     )
   }
   override fun equals(other: Any?): Boolean {
@@ -238,7 +242,7 @@ data class ForegroundNotice (
       return true
     }
     val other = other as ForegroundNotice
-    return NativeApiPigeonUtils.deepEquals(this.title, other.title) && NativeApiPigeonUtils.deepEquals(this.text, other.text) && NativeApiPigeonUtils.deepEquals(this.channelName, other.channelName) && NativeApiPigeonUtils.deepEquals(this.done, other.done) && NativeApiPigeonUtils.deepEquals(this.total, other.total)
+    return NativeApiPigeonUtils.deepEquals(this.title, other.title) && NativeApiPigeonUtils.deepEquals(this.text, other.text) && NativeApiPigeonUtils.deepEquals(this.channelName, other.channelName) && NativeApiPigeonUtils.deepEquals(this.done, other.done) && NativeApiPigeonUtils.deepEquals(this.total, other.total) && NativeApiPigeonUtils.deepEquals(this.cancelLabel, other.cancelLabel)
   }
 
   override fun hashCode(): Int {
@@ -248,10 +252,11 @@ data class ForegroundNotice (
     result = 31 * result + NativeApiPigeonUtils.deepHash(this.channelName)
     result = 31 * result + NativeApiPigeonUtils.deepHash(this.done)
     result = 31 * result + NativeApiPigeonUtils.deepHash(this.total)
+    result = 31 * result + NativeApiPigeonUtils.deepHash(this.cancelLabel)
     return result
   }
   override fun toString(): String {
-    return "ForegroundNotice(title=$title, text=$text, channelName=$channelName, done=$done, total=$total)"
+    return "ForegroundNotice(title=$title, text=$text, channelName=$channelName, done=$done, total=$total, cancelLabel=$cancelLabel)"
   }
 }
 private open class NativeApiPigeonCodec : StandardMessageCodec() {
@@ -398,6 +403,13 @@ interface StorageApi {
    * media, not indexed) are missing from the answer.
    */
   fun capturedDates(paths: List<String>): Map<String, Long>
+  /**
+   * A JPEG thumbnail of the image or video at the absolute [path], at most
+   * [size] pixels on its longer side, made by MediaStore (which caches
+   * it); `null` if MediaStore does not know the file or cannot make one.
+   * Only reads.
+   */
+  fun thumbnail(path: String, size: Long): ByteArray?
 
   companion object {
     /** The codec used by StorageApi. */
@@ -441,6 +453,24 @@ interface StorageApi {
           channel.setMessageHandler(null)
         }
       }
+      run {
+        val channel = BasicMessageChannel<Any?>(binaryMessenger, "dev.flutter.pigeon.file_organizer.StorageApi.thumbnail$separatedMessageChannelSuffix", codec, taskQueue)
+        if (api != null) {
+          channel.setMessageHandler { message, reply ->
+            val args = message as List<Any?>
+            val pathArg = args[0] as String
+            val sizeArg = args[1] as Long
+            val wrapped: List<Any?> = try {
+              listOf(api.thumbnail(pathArg, sizeArg))
+            } catch (exception: Throwable) {
+              NativeApiPigeonUtils.wrapError(exception)
+            }
+            reply.reply(wrapped)
+          }
+        } else {
+          channel.setMessageHandler(null)
+        }
+      }
     }
   }
 }
@@ -462,8 +492,8 @@ interface ForegroundApi {
   fun stop()
   fun isRunning(): Boolean
   /**
-   * What the notification shows now (read back from the system), or
-   * `null` if there is none.
+   * What the notification shows now (read back from the system, the
+   * cancel label from its action), or `null` if there is none.
    */
   fun currentNotice(): ForegroundNotice?
 
@@ -581,6 +611,24 @@ class ForegroundEvents(private val binaryMessenger: BinaryMessenger, private val
 {
     val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
     val channelName = "dev.flutter.pigeon.file_organizer.ForegroundEvents.onTimeout$separatedMessageChannelSuffix"
+    val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
+    channel.send(null) {
+      if (it is List<*>) {
+        if (it.size > 1) {
+          callback(Result.failure(FlutterError(it[0] as String, it[1] as String, it[2] as String?)))
+        } else {
+          callback(Result.success(Unit))
+        }
+      } else {
+        callback(Result.failure(NativeApiPigeonUtils.createConnectionError(channelName)))
+      } 
+    }
+  }
+  /** The user tapped "Cancel" in the notification. */
+  fun onCancelRequested(callback: (Result<Unit>) -> Unit)
+{
+    val separatedMessageChannelSuffix = if (messageChannelSuffix.isNotEmpty()) ".$messageChannelSuffix" else ""
+    val channelName = "dev.flutter.pigeon.file_organizer.ForegroundEvents.onCancelRequested$separatedMessageChannelSuffix"
     val channel = BasicMessageChannel<Any?>(binaryMessenger, channelName, codec)
     channel.send(null) {
       if (it is List<*>) {

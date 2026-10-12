@@ -2,9 +2,13 @@ import 'dart:async';
 
 import 'package:file_organizer/state/app_controller.dart';
 import 'package:file_organizer/state/app_status.dart';
-import 'package:file_organizer/state/cleanup_status.dart';
+import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
+import 'package:file_organizer/state/cleanup/cleanup_view.dart';
 import 'package:file_organizer/state/notification_permission.dart';
 import 'package:file_organizer/state/providers.dart';
+import 'package:file_organizer/ui/cleanup/plan_failed_screen.dart';
+import 'package:file_organizer/ui/cleanup/plan_screen.dart';
+import 'package:file_organizer/ui/cleanup/progress_screen.dart';
 import 'package:file_organizer/ui/home/home_screen.dart';
 import 'package:file_organizer/ui/onboarding/onboarding_screen.dart';
 import 'package:file_organizer/ui/splash_screen.dart';
@@ -62,16 +66,21 @@ class _RootScreenState extends ConsumerState<RootScreen>
   }
 }
 
-/// The home screen, or the temporary work screen while the workflow works
-/// or holds a result (until the screens of tasks 13–14).
+/// The home screen, or the cleanup screen of what the workflow does: its
+/// progress, the plan, a failure; an interrupted cleanup on the temporary
+/// screen until task 14.
 class _HomeOrWork extends ConsumerWidget {
   const _HomeOrWork();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final atHome = ref.watch(
-      cleanupStatusProvider.select((status) => status.atHome),
-    );
-    return atHome ? const HomeScreen() : const TemporaryWorkScreen();
-  }
+  Widget build(BuildContext context, WidgetRef ref) =>
+      switch (ref.watch(cleanupViewProvider)) {
+        AtHome() => const HomeScreen(),
+        final InProgress progress => ProgressScreen(progress: progress),
+        final PlanReview review => PlanScreen(review: review),
+        PlanFailed(:final reason) => PlanFailedScreen(reason: reason),
+        final InterruptedCleanup interrupted => TemporaryWorkScreen(
+          interrupted: interrupted,
+        ),
+      };
 }

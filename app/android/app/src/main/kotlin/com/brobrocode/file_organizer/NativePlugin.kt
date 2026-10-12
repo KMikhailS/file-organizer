@@ -4,6 +4,8 @@ import android.Manifest
 import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
+import android.graphics.Bitmap
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,10 +15,13 @@ import android.os.Environment
 import android.os.storage.StorageManager
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Size
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.PluginRegistry
+import java.io.ByteArrayOutputStream
+import java.io.IOException
 
 /**
  * The native side of `pigeons/native_api.dart` (docs/stage2_android.md,
@@ -50,6 +55,7 @@ class NativePlugin :
         ForegroundApi.setUp(messenger, this)
         val events = ForegroundEvents(messenger)
         CleanupService.onTimeout = { events.onTimeout {} }
+        CleanupService.onCancel = { events.onCancelRequested {} }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
@@ -58,6 +64,7 @@ class NativePlugin :
         StorageApi.setUp(messenger, null)
         ForegroundApi.setUp(messenger, null)
         CleanupService.onTimeout = null
+        CleanupService.onCancel = null
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -184,6 +191,40 @@ class NativePlugin :
         return dates
     }
 
+    override fun thumbnail(path: String, size: Long): ByteArray? {
+        val files = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL)
+        val projection = arrayOf(MediaStore.MediaColumns._ID, MediaStore.Files.FileColumns.MEDIA_TYPE)
+        val (id, mediaType) = context.contentResolver
+            .query(files, projection, "${MediaStore.MediaColumns.DATA} = ?", arrayOf(path), null)
+            ?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getLong(0) to cursor.getInt(1) else null
+            } ?: return null
+        val collection = when (mediaType) {
+            MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE ->
+                MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+            MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO ->
+                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
+            else -> return null
+        }
+        val edge = size.coerceIn(1, MAX_THUMBNAIL).toInt()
+        return try {
+            val bitmap = context.contentResolver.loadThumbnail(
+                ContentUris.withAppendedId(collection, id),
+                Size(edge, edge),
+                null,
+            )
+            ByteArrayOutputStream().use { out ->
+                bitmap.compress(Bitmap.CompressFormat.JPEG, THUMBNAIL_QUALITY, out)
+                bitmap.recycle()
+                out.toByteArray()
+            }
+        } catch (e: IOException) {
+            // No thumbnail for this file (broken, or a format the system
+            // cannot decode): the UI shows an icon.
+            null
+        }
+    }
+
     // -------------------------------------------------------- foreground
 
     override fun start(notice: ForegroundNotice) = CleanupService.start(context, notice)
@@ -206,6 +247,7 @@ class NativePlugin :
             channelName = channel?.name?.toString() ?: "",
             done = extras.getInt(Notification.EXTRA_PROGRESS).toLong(),
             total = extras.getInt(Notification.EXTRA_PROGRESS_MAX).toLong(),
+            cancelLabel = shown.notification.actions?.firstOrNull()?.title?.toString(),
         )
     }
 
@@ -218,5 +260,9 @@ class NativePlugin :
 
         /** Paths per MediaStore query: SQLite allows 999 parameters. */
         const val DATES_BATCH = 500
+
+        /** The largest thumbnail edge served, in pixels. */
+        const val MAX_THUMBNAIL = 512L
+        const val THUMBNAIL_QUALITY = 85
     }
 }

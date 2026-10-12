@@ -787,6 +787,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Freed: {size}'**
   String lastCleanupFreed(String size);
+
+  /// Stops the running work; also the action of the notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// Shown after Cancel until the work stops.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling…'**
+  String get cancelling;
+
+  /// Goes back to the home screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// Progress screen hint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can leave the app: the work goes on.'**
+  String get progressCanLeave;
+
+  /// Which source is scanned.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage {index} of {count}'**
+  String progressStorageOf(int index, int count);
+
+  /// The pipeline failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not make a plan'**
+  String get planFailedTitle;
+
+  /// Plan screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup plan'**
+  String get planTitle;
+
+  /// Plan summary: approved files.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file will be tidied up} other{{count} files will be tidied up}}'**
+  String planSummaryFiles(int count);
+
+  /// Plan summary: bytes freed by approved duplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'{size} will be freed'**
+  String planSummaryFreed(String size);
+
+  /// No operation approved.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing is selected'**
+  String get planNothingSelected;
+
+  /// Empty plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything is in order'**
+  String get planEmptyTitle;
+
+  /// Empty plan.
+  ///
+  /// In en, this message translates to:
+  /// **'There is nothing to tidy up right now.'**
+  String get planEmptyText;
+
+  /// Plan group of duplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Duplicates: 1 file, {size}} other{Duplicates: {count} files, {size}}}'**
+  String groupDuplicates(int count, String size);
+
+  /// Plan group of moves; folder like 'Photos / 2024'.
+  ///
+  /// In en, this message translates to:
+  /// **'To {folder}: {count}'**
+  String groupMoveTo(String folder, int count);
+
+  /// Explains the duplicates group.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra copies go to the quarantine; the copy that stays is named next to each.'**
+  String get groupDuplicatesHint;
+
+  /// Where a file of the plan lies now.
+  ///
+  /// In en, this message translates to:
+  /// **'From {folder}'**
+  String fileFrom(String folder);
+
+  /// Executes the approved plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyButton;
+
+  /// Declines the plan.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get declineButton;
+
+  /// Expands a plan group.
+  ///
+  /// In en, this message translates to:
+  /// **'Show files'**
+  String get showFiles;
+
+  /// Collapses a plan group.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide files'**
+  String get hideFiles;
+
+  /// Files the rules could not classify.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Not sorted: 1 file} other{Not sorted: {count} files}}'**
+  String unresolvedTitle(int count);
+
+  /// Explains unresolved files.
+  ///
+  /// In en, this message translates to:
+  /// **'The app is not sure where these files belong. They stay where they are.'**
+  String get unresolvedText;
+
+  /// Duplicates outside cluttered places.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 more copy is in your own folders: it stays untouched} other{{count} more copies are in your own folders: they stay untouched}}'**
+  String untouchedCopies(int count);
+
+  /// Plan warnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Not everything could be checked'**
+  String get warningsTitle;
+
+  /// Plan warning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 folder could not be read} other{{count} folders could not be read}}'**
+  String warningInaccessible(int count);
+
+  /// Plan warning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file could not be read: its duplicates are unknown} other{{count} files could not be read: their duplicates are unknown}}'**
+  String warningUnhashed(int count);
+
+  /// Plan warning.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 storage was not available} other{{count} storages were not available}}'**
+  String warningUnavailableSources(int count);
 }
 
 class _AppLocalizationsDelegate

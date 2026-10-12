@@ -446,4 +446,170 @@ class AppLocalizationsRu extends AppLocalizations {
   String lastCleanupFreed(String size) {
     return 'Освобождено: $size';
   }
+
+  @override
+  String get cancel => 'Отменить';
+
+  @override
+  String get cancelling => 'Отменяется…';
+
+  @override
+  String get back => 'Назад';
+
+  @override
+  String get progressCanLeave =>
+      'Можно выйти из приложения — работа продолжится.';
+
+  @override
+  String progressStorageOf(int index, int count) {
+    return 'Хранилище $index из $count';
+  }
+
+  @override
+  String get planFailedTitle => 'Не удалось составить план';
+
+  @override
+  String get planTitle => 'План уборки';
+
+  @override
+  String planSummaryFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Будет разобрано $count файла',
+      many: 'Будет разобрано $count файлов',
+      few: 'Будет разобрано $count файла',
+      one: 'Будет разобран $count файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String planSummaryFreed(String size) {
+    return 'Освободится $size';
+  }
+
+  @override
+  String get planNothingSelected => 'Ничего не выбрано';
+
+  @override
+  String get planEmptyTitle => 'Всё уже в порядке';
+
+  @override
+  String get planEmptyText => 'Сейчас нечего разбирать.';
+
+  @override
+  String groupDuplicates(int count, String size) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Дубли: $count файла, $size',
+      many: 'Дубли: $count файлов, $size',
+      few: 'Дубли: $count файла, $size',
+      one: 'Дубли: $count файл, $size',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String groupMoveTo(String folder, int count) {
+    return 'В $folder: $count';
+  }
+
+  @override
+  String get groupDuplicatesHint =>
+      'Лишние копии уходят в карантин; у каждой указано, какая копия остаётся.';
+
+  @override
+  String fileFrom(String folder) {
+    return 'Из $folder';
+  }
+
+  @override
+  String get applyButton => 'Применить';
+
+  @override
+  String get declineButton => 'Отказаться';
+
+  @override
+  String get showFiles => 'Показать файлы';
+
+  @override
+  String get hideFiles => 'Скрыть файлы';
+
+  @override
+  String unresolvedTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не разобрано $count файла',
+      many: 'Не разобрано $count файлов',
+      few: 'Не разобрано $count файла',
+      one: 'Не разобран $count файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get unresolvedText =>
+      'Приложение не уверено, куда их положить. Они остаются на месте.';
+
+  @override
+  String untouchedCopies(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ещё $count копии в ваших папках — не трогаем',
+      many: 'Ещё $count копий в ваших папках — не трогаем',
+      few: 'Ещё $count копии в ваших папках — не трогаем',
+      one: 'Ещё $count копия в ваших папках — не трогаем',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get warningsTitle => 'Не всё удалось проверить';
+
+  @override
+  String warningInaccessible(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Не удалось прочитать $count папки',
+      many: 'Не удалось прочитать $count папок',
+      few: 'Не удалось прочитать $count папки',
+      one: 'Не удалось прочитать $count папку',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warningUnhashed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Не удалось прочитать $count файла — неизвестно, есть ли у них дубли',
+      many:
+          'Не удалось прочитать $count файлов — неизвестно, есть ли у них дубли',
+      few:
+          'Не удалось прочитать $count файла — неизвестно, есть ли у них дубли',
+      one:
+          'Не удалось прочитать $count файл — неизвестно, есть ли у него дубли',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String warningUnavailableSources(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count хранилища были недоступны',
+      many: '$count хранилищ были недоступны',
+      few: '$count хранилища были недоступны',
+      one: '$count хранилище было недоступно',
+    );
+    return '$_temp0';
+  }
 }

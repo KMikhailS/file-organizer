@@ -22,6 +22,9 @@ abstract interface class AppTexts {
   String get executing;
   String get undoing;
 
+  /// The "Cancel" action of the notification.
+  String get cancel;
+
   String filesSeen(int count);
 
   String stepOf(int done, int total);

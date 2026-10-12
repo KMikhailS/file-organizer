@@ -7,13 +7,14 @@ import 'package:file_organizer/state/app_texts.dart';
 /// Keeps the foreground service in step with the workflow (decision A.7,
 /// `docs/stage2_android.md`, section 5.3): it runs while the workflow scans,
 /// analyzes, executes or undoes, its notification shows the progress, and
-/// it stops in every other state. When the system stops it for its time
-/// limit, the running work is cancelled.
+/// it stops in every other state. "Cancel" in the notification, and the
+/// system stopping it for its time limit, cancel the running work.
 final class ForegroundBinding {
   ForegroundBinding({
     required this._native,
     required this._workflow,
     required this._texts,
+    required this._cancel,
   });
 
   final AndroidNative _native;
@@ -21,21 +22,28 @@ final class ForegroundBinding {
 
   /// The texts in the current language.
   final AppTexts Function() _texts;
+
+  /// Cancels the running work (and shows that it is being cancelled).
+  final void Function() _cancel;
   StreamSubscription<WorkflowState>? _states;
   StreamSubscription<void>? _timeouts;
+  StreamSubscription<void>? _cancels;
   bool _running = false;
 
   /// Starts following the workflow. Calling it again does nothing.
   void attach() {
     _states ??= _workflow.states.listen(_follow);
-    _timeouts ??= _native.foregroundTimeouts.listen((_) => _workflow.cancel());
+    _timeouts ??= _native.foregroundTimeouts.listen((_) => _cancel());
+    _cancels ??= _native.foregroundCancels.listen((_) => _cancel());
   }
 
   Future<void> dispose() async {
     await _states?.cancel();
     await _timeouts?.cancel();
+    await _cancels?.cancel();
     _states = null;
     _timeouts = null;
+    _cancels = null;
   }
 
   void _follow(WorkflowState state) {
@@ -64,6 +72,7 @@ final class ForegroundBinding {
           channelName: texts.channelName,
           done: done,
           total: total,
+          cancelLabel: texts.cancel,
         );
     return switch (state) {
       Scanning(:final filesProcessed) => notice(

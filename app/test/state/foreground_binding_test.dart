@@ -40,6 +40,7 @@ void main() {
         ('Looking at your files', '125 files', 0, 0),
       );
       expect(notice.channelName, 'Cleanup progress');
+      expect(notice.cancelLabel, 'Cancel');
 
       final step = ForegroundBinding.noticeFor(analyzing, en)!;
       expect((step.title, step.text), ('Looking for duplicates', '3 of 7'));
@@ -54,6 +55,7 @@ void main() {
       final notice = ForegroundBinding.noticeFor(scanning, ru)!;
       expect((notice.title, notice.text), ('Просматриваю файлы', '125 файлов'));
       expect(notice.channelName, 'Ход уборки');
+      expect(notice.cancelLabel, 'Отменить');
       expect(ForegroundBinding.noticeFor(analyzing, ru)!.text, '3 из 7');
       expect(
         [

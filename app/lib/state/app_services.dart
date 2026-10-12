@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/source.dart';
 import 'package:file_organizer/core/ports/clock.dart';
 import 'package:file_organizer/core/ports/file_source.dart';
@@ -17,6 +20,7 @@ final class AppServices {
     required this.ids,
     required this.openDatabase,
     required this.openSource,
+    required this.thumbnail,
   });
 
   /// The Android services: the database file in the app's private storage,
@@ -35,6 +39,13 @@ final class AppServices {
         clock: clock,
         native: native,
       ),
+      thumbnail: (source, path, size) async => switch (await native.thumbnail(
+        '${source.location}/${path.value}',
+        size,
+      )) {
+        NativeOk(:final value) => value,
+        NativeFailed() => null,
+      },
     );
   }
 
@@ -47,4 +58,10 @@ final class AppServices {
 
   /// Opens the files of a source (probing what they allow).
   final Future<FileSource> Function(Source source) openSource;
+
+  /// A JPEG thumbnail of the image or video at `path` of `source`, at most
+  /// `size` pixels on its longer side; `null` if there is none. Only
+  /// reads.
+  final Future<Uint8List?> Function(Source source, LogicalPath path, int size)
+  thumbnail;
 }

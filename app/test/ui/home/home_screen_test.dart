@@ -140,15 +140,15 @@ void main() {
     expect(tidyUpEnabled(tester), isTrue);
   });
 
-  testWidgets('"Tidy up" plans on the temporary work screen; dismissing '
-      'comes back home; nothing can be applied', (tester) async {
+  testWidgets('"Tidy up" makes a plan; declining it comes back home', (
+    tester,
+  ) async {
     await tester.pumpApp(device);
     await tester.tapText('Tidy up');
-    await tester.settleUntil(find.textContaining('Plan ready'));
-    expect(find.textContaining('Plan ready'), findsOneWidget);
-    expect(find.textContaining('Apply'), findsNothing);
+    await tester.settleUntil(find.text('Cleanup plan'));
+    expect(find.text('Cleanup plan'), findsOneWidget);
 
-    await tester.tapText('Dismiss');
+    await tester.tapText('Decline');
     expect(find.text('Tidy up'), findsOneWidget);
   });
 

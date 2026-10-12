@@ -38,10 +38,27 @@ extension AppTester on WidgetTester {
 
   /// Taps the widget with [text] (scrolled into view) and settles.
   Future<void> tapText(String text) async {
-    await ensureVisible(find.text(text));
-    await pumpAndSettle();
+    await reveal(find.text(text));
     await tap(find.text(text));
     await settle();
+  }
+
+  /// Scrolls [finder] into view. Lazy lists build only the rows on screen,
+  /// so it scrolls the first list down, then up, until the widget exists.
+  Future<void> reveal(Finder finder) async {
+    final lists = find.byType(Scrollable);
+    for (final delta in [200.0, -200.0]) {
+      if (finder.evaluate().isNotEmpty || lists.evaluate().isEmpty) {
+        break;
+      }
+      try {
+        await scrollUntilVisible(finder, delta, scrollable: lists.first);
+      } on StateError {
+        // Not in this direction.
+      }
+    }
+    await ensureVisible(finder);
+    await pumpAndSettle();
   }
 
   /// Settles until [finder] finds something, for work that takes a few

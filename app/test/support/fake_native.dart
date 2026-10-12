@@ -126,6 +126,12 @@ final class FakeDevice {
   /// The files of each source; by default a typical Download folder.
   final InMemoryFileSource Function(Source source)? _files;
 
+  /// Thumbnails the fake system has, by logical path.
+  final Map<String, Uint8List> thumbnails = {};
+
+  /// Thumbnails asked for, by logical path.
+  final List<String> thumbnailRequests = [];
+
   /// Sources opened so far.
   final List<Source> opened = [];
   late final AndroidNative native = AndroidNative(
@@ -166,6 +172,10 @@ final class FakeDevice {
       opened.add(source);
       return _files?.call(source) ??
           InMemoryFileSource(sourceId: source.id).withTypicalDownloadFolder();
+    },
+    thumbnail: (source, path, size) async {
+      thumbnailRequests.add(path.value);
+      return thumbnails[path.value];
     },
   );
 }

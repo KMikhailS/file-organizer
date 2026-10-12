@@ -46,6 +46,9 @@ final class LocalizedAppTexts implements AppTexts {
   String get undoing => _l.progressUndoing;
 
   @override
+  String get cancel => _l.cancel;
+
+  @override
   String filesSeen(int count) => _l.filesCount(count);
 
   @override
