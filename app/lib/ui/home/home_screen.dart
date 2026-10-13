@@ -6,6 +6,7 @@ import 'package:file_organizer/state/app_status.dart';
 import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
 import 'package:file_organizer/ui/history/history_screen.dart';
 import 'package:file_organizer/ui/home/last_cleanup_card.dart';
+import 'package:file_organizer/ui/settings/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -24,6 +25,13 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l.appTitle),
         actions: [
+          IconButton(
+            tooltip: l.settingsTitle,
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+            ),
+          ),
           IconButton(
             tooltip: l.historyTitle,
             icon: const Icon(Icons.history),

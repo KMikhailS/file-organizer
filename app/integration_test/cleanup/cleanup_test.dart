@@ -3,7 +3,9 @@
 // own: the script refuses any device but an emulator, puts the test files
 // into Download/, grants the permissions, and checks the tree afterwards.
 //
-// The app (clean install) goes through the onboarding, plans, the test
+// The app (clean install) goes through the onboarding; Download marked
+// "Leave alone" in the settings makes the plan empty; without the mark the
+// app plans, the test
 // unchecks the music, applies, checks the files on disk, then undoes
 // through the UI: one group from the history, then the rest of the
 // cleanup, and checks that every file is back.
@@ -51,6 +53,32 @@ void main() {
 
     await _tap(tester, 'Next');
     await _tap(tester, 'Confirm');
+
+    // The settings change the plan: Download marked "Leave alone" through
+    // the folder picker on the real storage, then the plan is empty.
+    await _until(tester, find.text('Tidy up'));
+    await tester.tap(find.byTooltip('Settings'));
+    await _tap(tester, 'Mark a folder');
+    await _tap(tester, 'Download');
+    await _tap(tester, 'Choose this folder');
+    await _tap(tester, 'Leave alone');
+    await _until(tester, find.byTooltip('Remove the mark'));
+    await _back(tester);
+    await _tap(tester, 'Tidy up');
+    await _until(
+      tester,
+      find.text('Everything is in order'),
+      timeout: const Duration(minutes: 3),
+    );
+    say('MARK_KEEPS_DOWNLOAD');
+    await _tap(tester, 'Back');
+    await _until(tester, find.text('Tidy up'));
+    await tester.tap(find.byTooltip('Settings'));
+    await _until(tester, find.byTooltip('Remove the mark'));
+    await tester.tap(find.byTooltip('Remove the mark'));
+    await _until(tester, find.text('No marks yet'));
+    await _back(tester);
+
     await _tap(tester, 'Tidy up');
     await _until(
       tester,
@@ -174,6 +202,15 @@ Future<void> _reveal(WidgetTester tester, Finder finder) async {
   }
   await tester.ensureVisible(finder);
   await tester.pump(const Duration(milliseconds: 300));
+}
+
+/// Leaves the screen on top and waits until its route has gone: a tap
+/// during the transition would hit nothing.
+Future<void> _back(WidgetTester tester) async {
+  await tester.pageBack();
+  for (var i = 0; i < 15; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }
 
 /// Confirms the undo dialog.

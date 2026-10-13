@@ -31,7 +31,7 @@ final class DriftRuleRepository implements RuleRepository {
           sourceId: override.sourceId.value,
           folder: override.folder.value,
           zone: override.zone.name,
-        ),
+        ).toCompanion(false),
       );
 
   @override
@@ -77,7 +77,7 @@ final class DriftRuleRepository implements RuleRepository {
           nameContains: rule.nameContains,
           folder: rule.folder?.value,
           sourceId: rule.sourceId?.value,
-        ),
+        ).toCompanion(false),
       );
 
   @override

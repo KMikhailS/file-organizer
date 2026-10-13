@@ -1171,6 +1171,336 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'To {folder}'**
   String groupMoveTitle(String folder);
+
+  /// Settings screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// Settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'Folders'**
+  String get sectionFolders;
+
+  /// Settings section hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a folder to change what the cleanup does with it.'**
+  String get foldersHint;
+
+  /// Zone mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Tidy up'**
+  String get zoneChaos;
+
+  /// Zone mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave alone'**
+  String get zoneOrganized;
+
+  /// Zone mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude'**
+  String get zoneExcluded;
+
+  /// Zone mark hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Its files are sorted into the template folders'**
+  String get zoneChaosHint;
+
+  /// Zone mark hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Its files are never moved'**
+  String get zoneOrganizedHint;
+
+  /// Zone mark hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Not even looked at'**
+  String get zoneExcludedHint;
+
+  /// Adds a zone mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark a folder'**
+  String get addFolderMark;
+
+  /// No zone marks.
+  ///
+  /// In en, this message translates to:
+  /// **'No marks yet'**
+  String get noFolderMarks;
+
+  /// Zone choice dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'What to do with {folder}?'**
+  String chooseZoneTitle(String folder);
+
+  /// Warning before a 'tidy up' mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Every file in {folder} and its subfolders will be offered for sorting into the template folders. Nothing moves until you apply a plan.'**
+  String chaosWarning(String folder);
+
+  /// Goes on after a warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// Removes a zone mark.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove the mark'**
+  String get removeMark;
+
+  /// The root of the storage as a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'The whole storage'**
+  String get storageRoot;
+
+  /// Folder picker title.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a folder'**
+  String get chooseFolderTitle;
+
+  /// Picks the folder shown.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose this folder'**
+  String get chooseThisFolder;
+
+  /// Folder picker: empty.
+  ///
+  /// In en, this message translates to:
+  /// **'No folders inside'**
+  String get noSubfolders;
+
+  /// Folder picker: error.
+  ///
+  /// In en, this message translates to:
+  /// **'This folder cannot be read'**
+  String get folderUnreadable;
+
+  /// Settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rules'**
+  String get sectionRules;
+
+  /// Settings section hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rules apply before the built-in ones, from the top.'**
+  String get rulesHint;
+
+  /// Adds a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a rule'**
+  String get addRule;
+
+  /// No rules.
+  ///
+  /// In en, this message translates to:
+  /// **'No rules yet'**
+  String get noRules;
+
+  /// Rule editor title.
+  ///
+  /// In en, this message translates to:
+  /// **'Rule'**
+  String get ruleTitle;
+
+  /// Rule field.
+  ///
+  /// In en, this message translates to:
+  /// **'Extensions'**
+  String get ruleExtensions;
+
+  /// Rule field hint.
+  ///
+  /// In en, this message translates to:
+  /// **'pdf, docx'**
+  String get ruleExtensionsHint;
+
+  /// Rule field.
+  ///
+  /// In en, this message translates to:
+  /// **'Name contains'**
+  String get ruleNameContains;
+
+  /// Rule field.
+  ///
+  /// In en, this message translates to:
+  /// **'In folder'**
+  String get ruleFolder;
+
+  /// Rule without a folder.
+  ///
+  /// In en, this message translates to:
+  /// **'Anywhere'**
+  String get ruleAnyFolder;
+
+  /// Rule field.
+  ///
+  /// In en, this message translates to:
+  /// **'Put into'**
+  String get ruleTarget;
+
+  /// Rule target: unresolved.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave where it is'**
+  String get ruleKeepInPlace;
+
+  /// Rule validation.
+  ///
+  /// In en, this message translates to:
+  /// **'Set at least one condition'**
+  String get ruleNeedsCondition;
+
+  /// Saves.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveButton;
+
+  /// Deletes a rule.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get deleteButton;
+
+  /// Moves a rule up.
+  ///
+  /// In en, this message translates to:
+  /// **'Move up'**
+  String get moveUp;
+
+  /// Moves a rule down.
+  ///
+  /// In en, this message translates to:
+  /// **'Move down'**
+  String get moveDown;
+
+  /// Rule summary part.
+  ///
+  /// In en, this message translates to:
+  /// **'name contains «{text}»'**
+  String ruleSummaryName(String text);
+
+  /// Rule summary part.
+  ///
+  /// In en, this message translates to:
+  /// **'in {folder}'**
+  String ruleSummaryFolder(String folder);
+
+  /// Rule summary.
+  ///
+  /// In en, this message translates to:
+  /// **'{conditions} → {target}'**
+  String ruleSummary(String conditions, String target);
+
+  /// Settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarantine'**
+  String get sectionQuarantine;
+
+  /// Settings section hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra copies are kept for a while, so that a cleanup can be undone, then deleted for good.'**
+  String get quarantineHint;
+
+  /// Quarantine retention.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String retentionDays(int count);
+
+  /// Warning before a shorter retention.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Copies older than 1 day are deleted for good on the next start of the app; they cannot be brought back.} other{Copies older than {count} days are deleted for good on the next start of the app; they cannot be brought back.}}'**
+  String retentionShorterWarning(int count);
+
+  /// Settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get sectionLanguage;
+
+  /// UI language: the system's.
+  ///
+  /// In en, this message translates to:
+  /// **'As on the phone'**
+  String get languageSystem;
+
+  /// Russian, in Russian.
+  ///
+  /// In en, this message translates to:
+  /// **'Русский'**
+  String get languageRu;
+
+  /// English, in English.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get languageEn;
+
+  /// Settings section.
+  ///
+  /// In en, this message translates to:
+  /// **'Permissions'**
+  String get sectionPermissions;
+
+  /// Permission name.
+  ///
+  /// In en, this message translates to:
+  /// **'All files access'**
+  String get permissionAllFiles;
+
+  /// Permission state.
+  ///
+  /// In en, this message translates to:
+  /// **'Granted'**
+  String get permissionGranted;
+
+  /// Permission state.
+  ///
+  /// In en, this message translates to:
+  /// **'Not granted'**
+  String get permissionNotGranted;
+
+  /// Notification permission state.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get notificationsOn;
+
+  /// Notification permission state.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get notificationsOff;
+
+  /// Shown when the user marks a template folder or a folder inside one.
+  ///
+  /// In en, this message translates to:
+  /// **'This is a folder of the template: the cleanup never moves anything in it, so a mark has no effect here.'**
+  String get templateFolderNote;
 }
 
 class _AppLocalizationsDelegate

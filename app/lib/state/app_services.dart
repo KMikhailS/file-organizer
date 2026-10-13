@@ -4,11 +4,14 @@ import 'package:drift_flutter/drift_flutter.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/source.dart';
 import 'package:file_organizer/core/ports/clock.dart';
+import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/core/ports/file_source.dart';
 import 'package:file_organizer/core/ports/id_generator.dart';
 import 'package:file_organizer/data/db/app_database.dart';
 import 'package:file_organizer/platform/android/android_file_source.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
+import 'package:file_organizer/platform/posix/child_folders.dart' as posix;
+import 'package:file_organizer/platform/posix/posix_paths.dart';
 import 'package:file_organizer/platform/services/random_id_generator.dart';
 import 'package:file_organizer/platform/services/system_clock.dart';
 
@@ -21,6 +24,7 @@ final class AppServices {
     required this.openDatabase,
     required this.openSource,
     required this.thumbnail,
+    required this.childFolders,
   });
 
   /// The Android services: the database file in the app's private storage,
@@ -46,6 +50,13 @@ final class AppServices {
         NativeOk(:final value) => value,
         NativeFailed() => null,
       },
+      childFolders: (source, folder) async => switch (await posix.childFolders(
+        PosixPaths(source.location),
+        folder,
+      )) {
+        FileSuccess(:final value) => value,
+        FileFailure() => null,
+      },
     );
   }
 
@@ -64,4 +75,10 @@ final class AppServices {
   /// reads.
   final Future<Uint8List?> Function(Source source, LogicalPath path, int size)
   thumbnail;
+
+  /// The names of the folders directly inside `folder` of `source` (for
+  /// choosing a folder in the settings), or `null` if it cannot be read.
+  /// Only reads; links and hidden folders are left out.
+  final Future<List<String>?> Function(Source source, LogicalPath folder)
+  childFolders;
 }

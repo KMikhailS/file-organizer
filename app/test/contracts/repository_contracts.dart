@@ -192,6 +192,13 @@ void scanCheckpointRepositoryContract(
       checkpoint(stage: ScanStage.finalizing, cursor: 'c'),
     );
 
+    // A replacement without a cursor drops the old one.
+    await repo.save(checkpoint(stage: ScanStage.finalizing));
+    expect(
+      await repo.bySource(testSource),
+      checkpoint(stage: ScanStage.finalizing),
+    );
+
     await repo.clear(testSource);
     expect(await repo.bySource(testSource), isNull);
     expect(
@@ -626,6 +633,20 @@ void ruleRepositoryContract(Future<RuleRepository> Function() create) {
       await repo.removeClassificationRule('a');
       await repo.removeClassificationRule('missing');
       expect(await repo.classificationRules(), isEmpty);
+    });
+
+    test('a replacement clears the conditions it no longer has', () async {
+      await repo.saveClassificationRule(rule('a'));
+      final narrowed = ClassificationRule(
+        id: 'a',
+        category: Category.archives,
+        extensions: const {'dwg'},
+      );
+      await repo.saveClassificationRule(narrowed);
+      expect(await repo.classificationRules(), [narrowed]);
+      expect((await repo.classificationRules()).single.folder, isNull);
+      expect((await repo.classificationRules()).single.nameContains, isNull);
+      expect((await repo.classificationRules()).single.sourceId, isNull);
     });
   });
 }

@@ -749,4 +749,200 @@ class AppLocalizationsEn extends AppLocalizations {
   String groupMoveTitle(String folder) {
     return 'To $folder';
   }
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get sectionFolders => 'Folders';
+
+  @override
+  String get foldersHint =>
+      'Mark a folder to change what the cleanup does with it.';
+
+  @override
+  String get zoneChaos => 'Tidy up';
+
+  @override
+  String get zoneOrganized => 'Leave alone';
+
+  @override
+  String get zoneExcluded => 'Exclude';
+
+  @override
+  String get zoneChaosHint => 'Its files are sorted into the template folders';
+
+  @override
+  String get zoneOrganizedHint => 'Its files are never moved';
+
+  @override
+  String get zoneExcludedHint => 'Not even looked at';
+
+  @override
+  String get addFolderMark => 'Mark a folder';
+
+  @override
+  String get noFolderMarks => 'No marks yet';
+
+  @override
+  String chooseZoneTitle(String folder) {
+    return 'What to do with $folder?';
+  }
+
+  @override
+  String chaosWarning(String folder) {
+    return 'Every file in $folder and its subfolders will be offered for sorting into the template folders. Nothing moves until you apply a plan.';
+  }
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get removeMark => 'Remove the mark';
+
+  @override
+  String get storageRoot => 'The whole storage';
+
+  @override
+  String get chooseFolderTitle => 'Choose a folder';
+
+  @override
+  String get chooseThisFolder => 'Choose this folder';
+
+  @override
+  String get noSubfolders => 'No folders inside';
+
+  @override
+  String get folderUnreadable => 'This folder cannot be read';
+
+  @override
+  String get sectionRules => 'Your rules';
+
+  @override
+  String get rulesHint =>
+      'Your rules apply before the built-in ones, from the top.';
+
+  @override
+  String get addRule => 'Add a rule';
+
+  @override
+  String get noRules => 'No rules yet';
+
+  @override
+  String get ruleTitle => 'Rule';
+
+  @override
+  String get ruleExtensions => 'Extensions';
+
+  @override
+  String get ruleExtensionsHint => 'pdf, docx';
+
+  @override
+  String get ruleNameContains => 'Name contains';
+
+  @override
+  String get ruleFolder => 'In folder';
+
+  @override
+  String get ruleAnyFolder => 'Anywhere';
+
+  @override
+  String get ruleTarget => 'Put into';
+
+  @override
+  String get ruleKeepInPlace => 'Leave where it is';
+
+  @override
+  String get ruleNeedsCondition => 'Set at least one condition';
+
+  @override
+  String get saveButton => 'Save';
+
+  @override
+  String get deleteButton => 'Delete';
+
+  @override
+  String get moveUp => 'Move up';
+
+  @override
+  String get moveDown => 'Move down';
+
+  @override
+  String ruleSummaryName(String text) {
+    return 'name contains «$text»';
+  }
+
+  @override
+  String ruleSummaryFolder(String folder) {
+    return 'in $folder';
+  }
+
+  @override
+  String ruleSummary(String conditions, String target) {
+    return '$conditions → $target';
+  }
+
+  @override
+  String get sectionQuarantine => 'Quarantine';
+
+  @override
+  String get quarantineHint =>
+      'Extra copies are kept for a while, so that a cleanup can be undone, then deleted for good.';
+
+  @override
+  String retentionDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String retentionShorterWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Copies older than $count days are deleted for good on the next start of the app; they cannot be brought back.',
+      one: 'Copies older than 1 day are deleted for good on the next start of the app; they cannot be brought back.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sectionLanguage => 'Language';
+
+  @override
+  String get languageSystem => 'As on the phone';
+
+  @override
+  String get languageRu => 'Русский';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get sectionPermissions => 'Permissions';
+
+  @override
+  String get permissionAllFiles => 'All files access';
+
+  @override
+  String get permissionGranted => 'Granted';
+
+  @override
+  String get permissionNotGranted => 'Not granted';
+
+  @override
+  String get notificationsOn => 'On';
+
+  @override
+  String get notificationsOff => 'Off';
+
+  @override
+  String get templateFolderNote =>
+      'This is a folder of the template: the cleanup never moves anything in it, so a mark has no effect here.';
 }

@@ -994,5 +994,263 @@
         "type": "String"
       }
     }
+  },
+  "settingsTitle": "Settings",
+  "@settingsTitle": {
+    "description": "Settings screen title."
+  },
+  "sectionFolders": "Folders",
+  "@sectionFolders": {
+    "description": "Settings section."
+  },
+  "foldersHint": "Mark a folder to change what the cleanup does with it.",
+  "@foldersHint": {
+    "description": "Settings section hint."
+  },
+  "zoneChaos": "Tidy up",
+  "@zoneChaos": {
+    "description": "Zone mark."
+  },
+  "zoneOrganized": "Leave alone",
+  "@zoneOrganized": {
+    "description": "Zone mark."
+  },
+  "zoneExcluded": "Exclude",
+  "@zoneExcluded": {
+    "description": "Zone mark."
+  },
+  "zoneChaosHint": "Its files are sorted into the template folders",
+  "@zoneChaosHint": {
+    "description": "Zone mark hint."
+  },
+  "zoneOrganizedHint": "Its files are never moved",
+  "@zoneOrganizedHint": {
+    "description": "Zone mark hint."
+  },
+  "zoneExcludedHint": "Not even looked at",
+  "@zoneExcludedHint": {
+    "description": "Zone mark hint."
+  },
+  "addFolderMark": "Mark a folder",
+  "@addFolderMark": {
+    "description": "Adds a zone mark."
+  },
+  "noFolderMarks": "No marks yet",
+  "@noFolderMarks": {
+    "description": "No zone marks."
+  },
+  "chooseZoneTitle": "What to do with {folder}?",
+  "@chooseZoneTitle": {
+    "description": "Zone choice dialog.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "chaosWarning": "Every file in {folder} and its subfolders will be offered for sorting into the template folders. Nothing moves until you apply a plan.",
+  "@chaosWarning": {
+    "description": "Warning before a 'tidy up' mark.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "continueButton": "Continue",
+  "@continueButton": {
+    "description": "Goes on after a warning."
+  },
+  "removeMark": "Remove the mark",
+  "@removeMark": {
+    "description": "Removes a zone mark."
+  },
+  "storageRoot": "The whole storage",
+  "@storageRoot": {
+    "description": "The root of the storage as a folder."
+  },
+  "chooseFolderTitle": "Choose a folder",
+  "@chooseFolderTitle": {
+    "description": "Folder picker title."
+  },
+  "chooseThisFolder": "Choose this folder",
+  "@chooseThisFolder": {
+    "description": "Picks the folder shown."
+  },
+  "noSubfolders": "No folders inside",
+  "@noSubfolders": {
+    "description": "Folder picker: empty."
+  },
+  "folderUnreadable": "This folder cannot be read",
+  "@folderUnreadable": {
+    "description": "Folder picker: error."
+  },
+  "sectionRules": "Your rules",
+  "@sectionRules": {
+    "description": "Settings section."
+  },
+  "rulesHint": "Your rules apply before the built-in ones, from the top.",
+  "@rulesHint": {
+    "description": "Settings section hint."
+  },
+  "addRule": "Add a rule",
+  "@addRule": {
+    "description": "Adds a rule."
+  },
+  "noRules": "No rules yet",
+  "@noRules": {
+    "description": "No rules."
+  },
+  "ruleTitle": "Rule",
+  "@ruleTitle": {
+    "description": "Rule editor title."
+  },
+  "ruleExtensions": "Extensions",
+  "@ruleExtensions": {
+    "description": "Rule field."
+  },
+  "ruleExtensionsHint": "pdf, docx",
+  "@ruleExtensionsHint": {
+    "description": "Rule field hint."
+  },
+  "ruleNameContains": "Name contains",
+  "@ruleNameContains": {
+    "description": "Rule field."
+  },
+  "ruleFolder": "In folder",
+  "@ruleFolder": {
+    "description": "Rule field."
+  },
+  "ruleAnyFolder": "Anywhere",
+  "@ruleAnyFolder": {
+    "description": "Rule without a folder."
+  },
+  "ruleTarget": "Put into",
+  "@ruleTarget": {
+    "description": "Rule field."
+  },
+  "ruleKeepInPlace": "Leave where it is",
+  "@ruleKeepInPlace": {
+    "description": "Rule target: unresolved."
+  },
+  "ruleNeedsCondition": "Set at least one condition",
+  "@ruleNeedsCondition": {
+    "description": "Rule validation."
+  },
+  "saveButton": "Save",
+  "@saveButton": {
+    "description": "Saves."
+  },
+  "deleteButton": "Delete",
+  "@deleteButton": {
+    "description": "Deletes a rule."
+  },
+  "moveUp": "Move up",
+  "@moveUp": {
+    "description": "Moves a rule up."
+  },
+  "moveDown": "Move down",
+  "@moveDown": {
+    "description": "Moves a rule down."
+  },
+  "ruleSummaryName": "name contains «{text}»",
+  "@ruleSummaryName": {
+    "description": "Rule summary part.",
+    "placeholders": {
+      "text": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummaryFolder": "in {folder}",
+  "@ruleSummaryFolder": {
+    "description": "Rule summary part.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "ruleSummary": "{conditions} → {target}",
+  "@ruleSummary": {
+    "description": "Rule summary.",
+    "placeholders": {
+      "conditions": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "sectionQuarantine": "Quarantine",
+  "@sectionQuarantine": {
+    "description": "Settings section."
+  },
+  "quarantineHint": "Extra copies are kept for a while, so that a cleanup can be undone, then deleted for good.",
+  "@quarantineHint": {
+    "description": "Settings section hint."
+  },
+  "retentionDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@retentionDays": {
+    "description": "Quarantine retention.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "retentionShorterWarning": "{count, plural, =1{Copies older than 1 day are deleted for good on the next start of the app; they cannot be brought back.} other{Copies older than {count} days are deleted for good on the next start of the app; they cannot be brought back.}}",
+  "@retentionShorterWarning": {
+    "description": "Warning before a shorter retention.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sectionLanguage": "Language",
+  "@sectionLanguage": {
+    "description": "Settings section."
+  },
+  "languageSystem": "As on the phone",
+  "@languageSystem": {
+    "description": "UI language: the system's."
+  },
+  "languageRu": "Русский",
+  "@languageRu": {
+    "description": "Russian, in Russian."
+  },
+  "languageEn": "English",
+  "@languageEn": {
+    "description": "English, in English."
+  },
+  "sectionPermissions": "Permissions",
+  "@sectionPermissions": {
+    "description": "Settings section."
+  },
+  "permissionAllFiles": "All files access",
+  "@permissionAllFiles": {
+    "description": "Permission name."
+  },
+  "permissionGranted": "Granted",
+  "@permissionGranted": {
+    "description": "Permission state."
+  },
+  "permissionNotGranted": "Not granted",
+  "@permissionNotGranted": {
+    "description": "Permission state."
+  },
+  "notificationsOn": "On",
+  "@notificationsOn": {
+    "description": "Notification permission state."
+  },
+  "notificationsOff": "Off",
+  "@notificationsOff": {
+    "description": "Notification permission state."
+  },
+  "templateFolderNote": "This is a folder of the template: the cleanup never moves anything in it, so a mark has no effect here.",
+  "@templateFolderNote": {
+    "description": "Shown when the user marks a template folder or a folder inside one."
   }
 }

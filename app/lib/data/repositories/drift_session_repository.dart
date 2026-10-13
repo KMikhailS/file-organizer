@@ -32,7 +32,7 @@ final class DriftSessionRepository implements SessionRepository {
             statReverted: s.reverted,
             statRevertSkipped: s.revertSkipped,
             statRemovedBytes: s.removedBytes,
-          ),
+          ).toCompanion(false),
         );
   });
 

@@ -779,4 +779,207 @@ class AppLocalizationsRu extends AppLocalizations {
   String groupMoveTitle(String folder) {
     return 'В $folder';
   }
+
+  @override
+  String get settingsTitle => 'Настройки';
+
+  @override
+  String get sectionFolders => 'Папки';
+
+  @override
+  String get foldersHint =>
+      'Пометьте папку, чтобы изменить, что уборка с ней делает.';
+
+  @override
+  String get zoneChaos => 'Убирать';
+
+  @override
+  String get zoneOrganized => 'Не трогать';
+
+  @override
+  String get zoneExcluded => 'Исключить';
+
+  @override
+  String get zoneChaosHint => 'Файлы отсюда раскладываются по папкам шаблона';
+
+  @override
+  String get zoneOrganizedHint => 'Файлы здесь никогда не перемещаются';
+
+  @override
+  String get zoneExcludedHint => 'Папка даже не просматривается';
+
+  @override
+  String get addFolderMark => 'Пометить папку';
+
+  @override
+  String get noFolderMarks => 'Пометок пока нет';
+
+  @override
+  String chooseZoneTitle(String folder) {
+    return 'Что делать с $folder?';
+  }
+
+  @override
+  String chaosWarning(String folder) {
+    return 'Все файлы в $folder и вложенных папках будут предлагаться к раскладке по папкам шаблона. Ничего не переместится, пока вы не примените план.';
+  }
+
+  @override
+  String get continueButton => 'Продолжить';
+
+  @override
+  String get removeMark => 'Снять пометку';
+
+  @override
+  String get storageRoot => 'Всё хранилище';
+
+  @override
+  String get chooseFolderTitle => 'Выберите папку';
+
+  @override
+  String get chooseThisFolder => 'Выбрать эту папку';
+
+  @override
+  String get noSubfolders => 'Внутри нет папок';
+
+  @override
+  String get folderUnreadable => 'Эту папку не удаётся прочитать';
+
+  @override
+  String get sectionRules => 'Ваши правила';
+
+  @override
+  String get rulesHint =>
+      'Ваши правила действуют раньше встроенных, сверху вниз.';
+
+  @override
+  String get addRule => 'Добавить правило';
+
+  @override
+  String get noRules => 'Правил пока нет';
+
+  @override
+  String get ruleTitle => 'Правило';
+
+  @override
+  String get ruleExtensions => 'Расширения';
+
+  @override
+  String get ruleExtensionsHint => 'pdf, docx';
+
+  @override
+  String get ruleNameContains => 'Имя содержит';
+
+  @override
+  String get ruleFolder => 'В папке';
+
+  @override
+  String get ruleAnyFolder => 'Где угодно';
+
+  @override
+  String get ruleTarget => 'Куда класть';
+
+  @override
+  String get ruleKeepInPlace => 'Оставлять на месте';
+
+  @override
+  String get ruleNeedsCondition => 'Задайте хотя бы одно условие';
+
+  @override
+  String get saveButton => 'Сохранить';
+
+  @override
+  String get deleteButton => 'Удалить';
+
+  @override
+  String get moveUp => 'Выше';
+
+  @override
+  String get moveDown => 'Ниже';
+
+  @override
+  String ruleSummaryName(String text) {
+    return 'имя содержит «$text»';
+  }
+
+  @override
+  String ruleSummaryFolder(String folder) {
+    return 'в $folder';
+  }
+
+  @override
+  String ruleSummary(String conditions, String target) {
+    return '$conditions → $target';
+  }
+
+  @override
+  String get sectionQuarantine => 'Карантин';
+
+  @override
+  String get quarantineHint =>
+      'Лишние копии хранятся какое-то время, чтобы уборку можно было отменить, затем удаляются навсегда.';
+
+  @override
+  String retentionDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count дня',
+      many: '$count дней',
+      few: '$count дня',
+      one: '$count день',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String retentionShorterWarning(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other:
+          'Копии старше $count дня удалятся навсегда при следующем запуске приложения, вернуть их будет нельзя.',
+      many:
+          'Копии старше $count дней удалятся навсегда при следующем запуске приложения, вернуть их будет нельзя.',
+      few:
+          'Копии старше $count дней удалятся навсегда при следующем запуске приложения, вернуть их будет нельзя.',
+      one:
+          'Копии старше $count дня удалятся навсегда при следующем запуске приложения, вернуть их будет нельзя.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get sectionLanguage => 'Язык';
+
+  @override
+  String get languageSystem => 'Как в телефоне';
+
+  @override
+  String get languageRu => 'Русский';
+
+  @override
+  String get languageEn => 'English';
+
+  @override
+  String get sectionPermissions => 'Разрешения';
+
+  @override
+  String get permissionAllFiles => 'Доступ ко всем файлам';
+
+  @override
+  String get permissionGranted => 'Выдан';
+
+  @override
+  String get permissionNotGranted => 'Не выдан';
+
+  @override
+  String get notificationsOn => 'Включены';
+
+  @override
+  String get notificationsOff => 'Выключены';
+
+  @override
+  String get templateFolderNote =>
+      'Это папка шаблона: уборка ничего в ней не перемещает, поэтому пометка здесь не действует.';
 }

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:file_organizer/core/model/model.dart';
+import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/data/db/app_database.dart';
 import 'package:file_organizer/data/repositories/drift_repositories.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
@@ -141,6 +142,9 @@ final class FakeDevice {
   /// Thumbnails asked for, by logical path.
   final List<String> thumbnailRequests = [];
 
+  /// The files of each opened source, for the folder picker.
+  final Map<SourceId, InMemoryFileSource> _sources = {};
+
   /// Sources opened so far.
   final List<Source> opened = [];
   late final AndroidNative native = AndroidNative(
@@ -198,8 +202,30 @@ final class FakeDevice {
     openDatabase: () => restartable ? _open() : database,
     openSource: (source) async {
       opened.add(source);
-      return _files?.call(source) ??
+      return _sources[source.id] =
+          _files?.call(source) ??
           InMemoryFileSource(sourceId: source.id).withTypicalDownloadFolder();
+    },
+    childFolders: (source, folder) async {
+      final files = _sources[source.id];
+      if (files == null) {
+        return null;
+      }
+      final names = <String>{};
+      await for (final page in files.list()) {
+        if (page case FileSuccess(:final value)) {
+          for (final entry in value.entries) {
+            final inside = folder.isRoot || entry.path.isWithin(folder);
+            final rest = folder.isRoot
+                ? entry.path.segments
+                : entry.path.segments.skip(folder.segments.length).toList();
+            if (inside && rest.length > 1 && !rest.first.startsWith('.')) {
+              names.add(rest.first);
+            }
+          }
+        }
+      }
+      return names.toList()..sort();
     },
     thumbnail: (source, path, size) async {
       thumbnailRequests.add(path.value);

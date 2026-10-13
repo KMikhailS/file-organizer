@@ -41,7 +41,7 @@ final class DriftSourceRepository implements SourceRepository {
             providesCapturedAt: c.providesCapturedAt,
             systemPurgesQuarantine: c.systemPurgesQuarantine,
             enabled: source.enabled,
-          ),
+          ).toCompanion(false),
         );
   }
 

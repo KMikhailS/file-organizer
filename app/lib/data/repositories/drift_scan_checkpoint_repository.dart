@@ -32,7 +32,7 @@ final class DriftScanCheckpointRepository implements ScanCheckpointRepository {
           scanId: checkpoint.scanId.value,
           stage: checkpoint.stage.name,
           cursor: checkpoint.cursor?.value,
-        ),
+        ).toCompanion(false),
       );
 
   @override
