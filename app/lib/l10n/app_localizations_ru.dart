@@ -406,7 +406,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sessionCancelled => 'Остановлена';
 
   @override
-  String get sessionReverted => 'Отменена: всё возвращено';
+  String get sessionReverted => 'Отменена';
 
   @override
   String get sessionPartiallyReverted => 'Отменена частично';
@@ -611,5 +611,172 @@ class AppLocalizationsRu extends AppLocalizations {
       one: '$count хранилище было недоступно',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get resultCompleted => 'Уборка завершена';
+
+  @override
+  String get resultCancelled => 'Уборка остановлена';
+
+  @override
+  String get resultReverted => 'Уборка отменена';
+
+  @override
+  String get resultPartiallyReverted => 'Уборка отменена частично';
+
+  @override
+  String countDone(int count) {
+    return 'Выполнено: $count';
+  }
+
+  @override
+  String countSkipped(int count) {
+    return 'Пропущено: $count';
+  }
+
+  @override
+  String countFailed(int count) {
+    return 'Ошибок: $count';
+  }
+
+  @override
+  String countReverted(int count) {
+    return 'Возвращено: $count';
+  }
+
+  @override
+  String countNotReverted(int count) {
+    return 'Не возвращено: $count';
+  }
+
+  @override
+  String get problemsTitle => 'Что не получилось';
+
+  @override
+  String get needsAttention => 'Требует внимания';
+
+  @override
+  String get undoCleanupButton => 'Отменить уборку';
+
+  @override
+  String get closeButton => 'Готово';
+
+  @override
+  String get undoConfirmTitle => 'Вернуть файлы?';
+
+  @override
+  String get undoConfirmAll =>
+      'Все файлы этой уборки вернутся на прежние места.';
+
+  @override
+  String undoConfirmFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count файла вернутся на прежние места.',
+      many: '$count файлов вернутся на прежние места.',
+      few: '$count файла вернутся на прежние места.',
+      one: '$count файл вернётся на прежнее место.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get undoConfirmYes => 'Вернуть';
+
+  @override
+  String get interruptedTitle => 'Последняя уборка была прервана';
+
+  @override
+  String get interruptedText =>
+      'Приложение остановилось посреди уборки. Каждая начатая операция проверена: сделанное осталось на месте, ничего не перезаписано.';
+
+  @override
+  String interruptedOperations(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Разобрано $count операции',
+      many: 'Разобрано $count операций',
+      few: 'Разобрано $count операции',
+      one: 'Разобрана $count операция',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String interruptedUnavailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count уборки ждут, когда хранилище снова станет доступно',
+      many: '$count уборок ждут, когда хранилище снова станет доступно',
+      few: '$count уборки ждут, когда хранилище снова станет доступно',
+      one: '$count уборка ждёт, когда хранилище снова станет доступно',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get interruptedFinish => 'Доделать';
+
+  @override
+  String get interruptedUndo => 'Откатить';
+
+  @override
+  String get interruptedLater => 'Не сейчас';
+
+  @override
+  String get historyTitle => 'История';
+
+  @override
+  String get sessionInterrupted => 'Прервана';
+
+  @override
+  String sessionTitle(String date) {
+    return 'Уборка $date';
+  }
+
+  @override
+  String get undoWholeButton => 'Отменить всю уборку';
+
+  @override
+  String get undoGroupButton => 'Вернуть эту группу';
+
+  @override
+  String get undoFileButton => 'Вернуть';
+
+  @override
+  String get purgedMark => 'Карантин очищен — откат невозможен';
+
+  @override
+  String get fileDone => 'Сделано';
+
+  @override
+  String get fileReverted => 'Возвращён';
+
+  @override
+  String get nothingToUndo => 'Откатывать нечего';
+
+  @override
+  String groupFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count файла',
+      many: '$count файлов',
+      few: '$count файла',
+      one: '$count файл',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupDuplicatesTitle => 'Дубли';
+
+  @override
+  String groupMoveTitle(String folder) {
+    return 'В $folder';
   }
 }

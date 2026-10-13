@@ -573,7 +573,7 @@
   "@sessionCancelled": {
     "description": "Status of a cleanup."
   },
-  "sessionReverted": "Undone: everything is back",
+  "sessionReverted": "Undone",
   "@sessionReverted": {
     "description": "Status of a cleanup."
   },
@@ -789,6 +789,209 @@
     "placeholders": {
       "count": {
         "type": "int"
+      }
+    }
+  },
+  "resultCompleted": "Cleanup done",
+  "@resultCompleted": {
+    "description": "Result title."
+  },
+  "resultCancelled": "Cleanup stopped",
+  "@resultCancelled": {
+    "description": "Result title."
+  },
+  "resultReverted": "Cleanup undone",
+  "@resultReverted": {
+    "description": "Result title: every operation that could be undone was undone (a lost file still shows among the problems)."
+  },
+  "resultPartiallyReverted": "Cleanup partly undone",
+  "@resultPartiallyReverted": {
+    "description": "Result title."
+  },
+  "countDone": "Done: {count}",
+  "@countDone": {
+    "description": "Result count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countSkipped": "Skipped: {count}",
+  "@countSkipped": {
+    "description": "Result count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countFailed": "Failed: {count}",
+  "@countFailed": {
+    "description": "Result count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countReverted": "Brought back: {count}",
+  "@countReverted": {
+    "description": "Result count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "countNotReverted": "Not brought back: {count}",
+  "@countNotReverted": {
+    "description": "Result count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "problemsTitle": "What did not work",
+  "@problemsTitle": {
+    "description": "Problems list title."
+  },
+  "needsAttention": "Needs attention",
+  "@needsAttention": {
+    "description": "Marks a problem recovery could not sort out."
+  },
+  "undoCleanupButton": "Undo the cleanup",
+  "@undoCleanupButton": {
+    "description": "Undoes the cleanup just done."
+  },
+  "closeButton": "Close",
+  "@closeButton": {
+    "description": "Closes a result."
+  },
+  "undoConfirmTitle": "Bring the files back?",
+  "@undoConfirmTitle": {
+    "description": "Undo confirmation title."
+  },
+  "undoConfirmAll": "Every file of this cleanup goes back where it was.",
+  "@undoConfirmAll": {
+    "description": "Undo confirmation text."
+  },
+  "undoConfirmFiles": "{count, plural, =1{1 file goes back where it was.} other{{count} files go back where they were.}}",
+  "@undoConfirmFiles": {
+    "description": "Undo confirmation text.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "undoConfirmYes": "Bring back",
+  "@undoConfirmYes": {
+    "description": "Confirms an undo."
+  },
+  "interruptedTitle": "The last cleanup was interrupted",
+  "@interruptedTitle": {
+    "description": "Interrupted cleanup title."
+  },
+  "interruptedText": "The app stopped in the middle of a cleanup. Every operation in progress was checked: what was done stays done, nothing was overwritten.",
+  "@interruptedText": {
+    "description": "Interrupted cleanup explanation."
+  },
+  "interruptedOperations": "{count, plural, =1{1 operation sorted out} other{{count} operations sorted out}}",
+  "@interruptedOperations": {
+    "description": "Interrupted cleanup count.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "interruptedUnavailable": "{count, plural, =1{1 cleanup waits for its storage to come back} other{{count} cleanups wait for their storage to come back}}",
+  "@interruptedUnavailable": {
+    "description": "Interrupted sessions of an unavailable storage.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "interruptedFinish": "Finish the cleanup",
+  "@interruptedFinish": {
+    "description": "Plans what is left."
+  },
+  "interruptedUndo": "Undo it",
+  "@interruptedUndo": {
+    "description": "Undoes the interrupted cleanup."
+  },
+  "interruptedLater": "Not now",
+  "@interruptedLater": {
+    "description": "Leaves the decision for later."
+  },
+  "historyTitle": "History",
+  "@historyTitle": {
+    "description": "History screen title."
+  },
+  "sessionInterrupted": "Interrupted",
+  "@sessionInterrupted": {
+    "description": "Status of a session whose storage was not available for recovery."
+  },
+  "sessionTitle": "Cleanup of {date}",
+  "@sessionTitle": {
+    "description": "Session screen title.",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "undoWholeButton": "Undo the whole cleanup",
+  "@undoWholeButton": {
+    "description": "Undoes a past session."
+  },
+  "undoGroupButton": "Bring this group back",
+  "@undoGroupButton": {
+    "description": "Undoes one group of a past session."
+  },
+  "undoFileButton": "Bring back",
+  "@undoFileButton": {
+    "description": "Undoes one file of a past session."
+  },
+  "purgedMark": "Quarantine emptied: cannot be brought back",
+  "@purgedMark": {
+    "description": "A file whose quarantine copy was purged."
+  },
+  "fileDone": "Done",
+  "@fileDone": {
+    "description": "History file status."
+  },
+  "fileReverted": "Brought back",
+  "@fileReverted": {
+    "description": "History file status."
+  },
+  "nothingToUndo": "Nothing left to undo",
+  "@nothingToUndo": {
+    "description": "A past session with nothing to undo."
+  },
+  "groupFiles": "{count, plural, =1{1 file} other{{count} files}}",
+  "@groupFiles": {
+    "description": "History group size.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "groupDuplicatesTitle": "Duplicates",
+  "@groupDuplicatesTitle": {
+    "description": "History group of duplicates."
+  },
+  "groupMoveTitle": "To {folder}",
+  "@groupMoveTitle": {
+    "description": "History group of moves.",
+    "placeholders": {
+      "folder": {
+        "type": "String"
       }
     }
   }

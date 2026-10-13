@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/source.dart';
+import 'package:file_organizer/core/undo/undo_types.dart';
 import 'package:file_organizer/state/cleanup/cleanup_view.dart';
 import 'package:file_organizer/state/cleanup/cleanup_view_of.dart';
 import 'package:file_organizer/state/providers.dart';
@@ -65,7 +66,29 @@ final class CleanupActions {
   /// Executes the approved operations.
   Future<void> apply() => _ref.read(workflowProvider).execute();
 
-  /// Declines the plan, or leaves a failure or an interrupted cleanup.
+  /// Undoes the last run (the result on screen) or the interrupted
+  /// sessions.
+  Future<void> undoLast() => _ref.read(workflowProvider).undo();
+
+  /// Undoes a past cleanup from the history: all of it, one of its groups
+  /// ([groupKey]) or one file ([operationId]).
+  Future<void> undoSession(
+    SessionId session, {
+    String? groupKey,
+    OperationId? operationId,
+  }) => _ref
+      .read(workflowProvider)
+      .undoSession(
+        session,
+        scope: switch ((groupKey, operationId)) {
+          (_, final OperationId id) => OneOperation(id),
+          (final String key, null) => OneGroup(key),
+          (null, null) => const WholeSession(),
+        },
+      );
+
+  /// Declines the plan, closes a result or a failure, or leaves an
+  /// interrupted cleanup for later.
   void dismiss() => _ref.read(workflowProvider).dismiss();
 
   /// Stops what runs: scanning and analysis at once, execution and undo

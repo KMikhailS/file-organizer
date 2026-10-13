@@ -1,8 +1,10 @@
 import 'package:file_organizer/core/model/classification_reason.dart';
 import 'package:file_organizer/core/model/ids.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/operation_reason.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
+import 'package:file_organizer/core/model/session_stats.dart';
 import 'package:file_organizer/core/model/source.dart';
 import 'package:meta/meta.dart';
 
@@ -14,10 +16,45 @@ sealed class CleanupView {
   const CleanupView();
 }
 
-/// Nothing to show beyond the home screen: idle, or a cleanup or undo
-/// finished (its result is on the home screen).
+/// Nothing going on: the home screen.
 final class AtHome extends CleanupView {
   const AtHome();
+}
+
+/// How a cleanup or an undo ended.
+enum ResultKind {
+  /// Every approved operation was executed (some may have failed).
+  completed,
+
+  /// The user stopped the execution.
+  cancelled,
+
+  /// Every executed operation was undone.
+  reverted,
+
+  /// Some operations could not be undone, or the undo was stopped.
+  partiallyReverted,
+}
+
+/// A cleanup or an undo just ended: what happened, until the user closes
+/// it. Its problems come from the journal (`sessionProblemsProvider`).
+final class CleanupResult extends CleanupView {
+  CleanupResult({
+    required this.kind,
+    required Iterable<SessionId> sessions,
+    required this.totals,
+  }) : sessions = List.unmodifiable(sessions);
+
+  final ResultKind kind;
+
+  /// The sessions of the run, in order.
+  final List<SessionId> sessions;
+
+  /// Their statistics added up.
+  final SessionStats totals;
+
+  /// Whether "Undo the cleanup" applies: something is left to undo.
+  bool get canUndo => kind != ResultKind.reverted;
 }
 
 enum ProgressStage { scanning, analyzing, executing, undoing }
@@ -84,16 +121,46 @@ final class PlanFailed extends CleanupView {
   final String reason;
 }
 
-/// Sessions a crash interrupted were recovered at start-up. TEMPORARY
-/// screen until task 14.
+/// Sessions a crash interrupted were recovered at start-up: the user
+/// finishes the job (a new plan), undoes them, or decides later.
 final class InterruptedCleanup extends CleanupView {
-  const InterruptedCleanup({
-    required this.recovered,
+  InterruptedCleanup({
+    required this.sessions,
+    required this.operations,
+    required Iterable<ProblemView> problems,
     required this.unavailable,
+  }) : problems = List.unmodifiable(problems);
+
+  /// Sessions recovered (each closed as failed, each can be undone).
+  final int sessions;
+
+  /// Operations that were in flight and are now sorted out.
+  final int operations;
+
+  /// What recovery could not sort out cleanly; "needs attention" first.
+  final List<ProblemView> problems;
+
+  /// Interrupted sessions whose storage is not available now.
+  final int unavailable;
+}
+
+/// An operation that failed, was skipped or could not be undone.
+@immutable
+final class ProblemView {
+  const ProblemView({
+    required this.type,
+    required this.path,
+    required this.problem,
   });
 
-  final int recovered;
-  final int unavailable;
+  final OperationType type;
+
+  /// The file (or the folder of a mkdir).
+  final LogicalPath path;
+  final OperationProblem problem;
+
+  /// Recovery could not sort it out: the user should look.
+  bool get needsAttention => problem is NeedsAttention;
 }
 
 /// The plan of one source.

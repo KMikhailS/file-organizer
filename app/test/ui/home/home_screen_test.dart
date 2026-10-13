@@ -104,7 +104,7 @@ void main() {
       ),
     );
     await tester.pumpApp(device);
-    expect(find.text('Undone: everything is back'), findsOneWidget);
+    expect(find.text('Undone'), findsOneWidget);
     expect(find.text('3 of 3 operations done'), findsOneWidget);
     expect(find.text('3 operations undone'), findsOneWidget);
     expect(find.textContaining('Freed'), findsNothing);

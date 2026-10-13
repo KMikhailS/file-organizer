@@ -68,7 +68,7 @@ void main() {
     return view() as PlanReview;
   }
 
-  test('idle and finished are at home', () {
+  test('idle is at home', () {
     expect(view(), isA<AtHome>());
     expect(cleanupViewOf(null), isA<AtHome>());
   });
@@ -158,7 +158,7 @@ void main() {
     expect(review.canApply, isFalse);
   });
 
-  test('apply executes only what is approved, then goes home', () async {
+  test('apply executes only what is approved, then shows the result', () async {
     final review = await plan();
     final source = review.sources.single.source.id;
     final music = review.sources.single.groups.firstWhere(
@@ -169,13 +169,19 @@ void main() {
     );
     actions().setGroupApproval(source, music.key, approved: false);
     await actions().apply();
-    expect(await settledView(), isA<AtHome>());
+    final result = await settledView() as CleanupResult;
+    expect(result.kind, ResultKind.completed);
+    expect(result.canUndo, isTrue);
+    expect(result.totals.done, result.totals.total);
     expect(workflow().state, isA<Completed>());
     expect(files.isFile('Download/song.mp3'), isTrue);
     expect(files.isFile('Music/song.mp3'), isFalse);
     expect(files.isFile('Download/notes.txt'), isFalse);
     expect(files.isFile('Documents/Tax/receipt.pdf'), isTrue);
     expect(files.isFile('Documents/Old/receipt copy.pdf'), isTrue);
+
+    actions().dismiss();
+    expect(await settledView(), isA<AtHome>());
   });
 
   test('declining goes home and changes nothing', () async {

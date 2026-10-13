@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/data/db/app_database.dart';
@@ -9,6 +12,7 @@ import 'package:file_organizer/state/providers.dart';
 import 'package:file_organizer/ui/texts/localized_app_texts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/misc.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 import 'fake_clock.dart';
 import 'fs/in_memory_file_source.dart';
@@ -116,7 +120,12 @@ final class FakeForeground implements ForegroundApi {
 /// A fake device for the state layer: native APIs, an in-memory database
 /// and in-memory file sources.
 final class FakeDevice {
-  FakeDevice({this._files});
+  /// With [restartable], the database is a file in a temporary folder
+  /// (removed after the test): each start of the app opens it anew, so a
+  /// test can close the app and start it again on the same data.
+  FakeDevice({this._files, this.restartable = false});
+
+  final bool restartable;
 
   final FakeAccess access = FakeAccess();
   final FakeStorage storage = FakeStorage();
@@ -139,7 +148,24 @@ final class FakeDevice {
     storage: storage,
     foreground: foreground,
   );
-  late final AppDatabase database = AppDatabase(NativeDatabase.memory());
+  late final String _databasePath = () {
+    final folder = Directory.systemTemp.createTempSync('fo_device_');
+    addTearDown(() => folder.deleteSync(recursive: true));
+    return '${folder.path}/app.sqlite';
+  }();
+
+  /// The database of the device, for a test to read and prepare.
+  late final AppDatabase database = _open();
+
+  AppDatabase _open() {
+    if (!restartable) {
+      return AppDatabase(NativeDatabase.memory());
+    }
+    // Several connections to one file, on purpose (one per start of the
+    // app, one for the test): not the mistake drift warns about.
+    driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+    return AppDatabase(NativeDatabase(File(_databasePath)));
+  }
 
   /// The languages of the system, most preferred first.
   List<String> languages = const ['en'];
@@ -167,7 +193,9 @@ final class FakeDevice {
     native: native,
     clock: clock,
     ids: SequentialIdGenerator('dev'),
-    openDatabase: () => database,
+    // A restartable device gives each start its own connection: the app
+    // closes its database when it stops.
+    openDatabase: () => restartable ? _open() : database,
     openSource: (source) async {
       opened.add(source);
       return _files?.call(source) ??

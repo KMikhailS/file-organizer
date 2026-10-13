@@ -4,12 +4,11 @@
 // into Download/, grants the permissions, and checks the tree afterwards.
 //
 // The app (clean install) goes through the onboarding, plans, the test
-// unchecks the music, applies, checks the files on disk, then undoes the
-// cleanup through the workflow (the undo screen comes with task 14) and
-// checks that every file is back.
+// unchecks the music, applies, checks the files on disk, then undoes
+// through the UI: one group from the history, then the rest of the
+// cleanup, and checks that every file is back.
 import 'dart:io';
 
-import 'package:file_organizer/core/workflow/workflow.dart';
 import 'package:file_organizer/state/app_services.dart';
 import 'package:file_organizer/state/providers.dart';
 import 'package:file_organizer/ui/app.dart';
@@ -91,7 +90,7 @@ void main() {
     await _tap(tester, 'Apply');
     await _until(
       tester,
-      find.text('Done'),
+      find.text('Cleanup done'),
       timeout: const Duration(minutes: 2),
     );
     say('APPLIED');
@@ -103,13 +102,38 @@ void main() {
     expect(File('$download/fo13_report (1).pdf').existsSync(), isFalse);
     expect(File('$download/fo13_report.pdf').existsSync(), isFalse);
     expect(Directory('$storage/.FileOrganizer').existsSync(), isTrue);
+    await _tap(tester, 'Close');
 
-    final container = ProviderScope.containerOf(
-      tester.element(find.text('Tidy up')),
+    // One group back from the history, with its dialog.
+    await _tap(tester, 'History');
+    await _until(tester, find.byType(ListTile));
+    await tester.tap(find.byType(ListTile).first);
+    await tester.pump(const Duration(milliseconds: 300));
+    final documents = find.descendant(
+      of: find.ancestor(
+        of: find.text('To Documents'),
+        matching: find.byType(ListTile),
+      ),
+      matching: find.text('Bring this group back'),
     );
-    final workflow = container.read(workflowProvider);
-    await tester.runAsync(workflow.undo);
-    expect(workflow.state, isA<Reverted>());
+    await _until(tester, find.text('To Documents'));
+    await _reveal(tester, documents);
+    await tester.tap(documents);
+    await _confirm(tester);
+    await _until(tester, find.text('Cleanup partly undone'));
+    expect(File('$download/fo13_report.pdf').existsSync(), isTrue);
+    expect(File('$storage/Photos/2021/fo13_photo.jpg').existsSync(), isTrue);
+    say('GROUP_UNDONE');
+    await _tap(tester, 'Close');
+
+    // The rest from the card of the last cleanup.
+    await _tap(tester, 'Partly undone');
+    await _tap(tester, 'Undo the whole cleanup');
+    await _confirm(tester);
+    await _until(tester, find.text('Cleanup undone'));
+    await _tap(tester, 'Close');
+    await _until(tester, find.text('Tidy up'));
+
     for (final name in [
       'fo13_report.pdf',
       'fo13_report (1).pdf',
@@ -152,8 +176,19 @@ Future<void> _reveal(WidgetTester tester, Finder finder) async {
   await tester.pump(const Duration(milliseconds: 300));
 }
 
+/// Confirms the undo dialog.
+Future<void> _confirm(WidgetTester tester) async {
+  final yes = find.descendant(
+    of: find.byType(AlertDialog),
+    matching: find.text('Bring back'),
+  );
+  await _until(tester, yes);
+  await tester.tap(yes);
+  await tester.pump(const Duration(milliseconds: 300));
+}
+
 Future<void> _tap(WidgetTester tester, String text) async {
-  final target = find.text(text);
+  final target = text == 'History' ? find.byTooltip(text) : find.text(text);
   await _until(tester, target);
   await _reveal(tester, target);
   await tester.tap(target);

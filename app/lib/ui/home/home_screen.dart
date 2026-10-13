@@ -4,6 +4,7 @@ import 'package:file_organizer/l10n/app_localizations.dart';
 import 'package:file_organizer/state/app_controller.dart';
 import 'package:file_organizer/state/app_status.dart';
 import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
+import 'package:file_organizer/ui/history/history_screen.dart';
 import 'package:file_organizer/ui/home/last_cleanup_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,7 +21,18 @@ class HomeScreen extends ConsumerWidget {
     final status = ref.watch(appControllerProvider);
     final ready = status is AppReady;
     return Scaffold(
-      appBar: AppBar(title: Text(l.appTitle)),
+      appBar: AppBar(
+        title: Text(l.appTitle),
+        actions: [
+          IconButton(
+            tooltip: l.historyTitle,
+            icon: const Icon(Icons.history),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const HistoryScreen()),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(24),

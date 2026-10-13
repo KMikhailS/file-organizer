@@ -1,8 +1,9 @@
 import 'package:file_organizer/core/model/cleanup_session.dart';
-import 'package:file_organizer/core/model/session_status.dart';
 import 'package:file_organizer/l10n/app_localizations.dart';
 import 'package:file_organizer/state/last_cleanup.dart';
+import 'package:file_organizer/ui/history/session_screen.dart';
 import 'package:file_organizer/ui/texts/date_text.dart';
+import 'package:file_organizer/ui/texts/session_status_text.dart';
 import 'package:file_organizer/ui/texts/size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,24 +18,35 @@ class LastCleanupCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final session = ref.watch(lastCleanupProvider).value;
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: session == null
-            ? Text(l.lastCleanupNone, style: theme.textTheme.bodyLarge)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 4,
-                children: [
-                  Text(
-                    l.lastCleanupTitle(
-                      dateText(l, session.finishedAt ?? session.startedAt),
-                    ),
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  Text(sessionStatusText(l, session.status)),
-                  ..._counts(l, session).map(Text.new),
-                ],
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        // The cleanup in the history: its files, and undo.
+        onTap: session == null
+            ? null
+            : () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => SessionScreen(sessionId: session.id),
+                ),
               ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: session == null
+              ? Text(l.lastCleanupNone, style: theme.textTheme.bodyLarge)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 4,
+                  children: [
+                    Text(
+                      l.lastCleanupTitle(
+                        dateText(l, session.finishedAt ?? session.startedAt),
+                      ),
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    Text(sessionStatusText(l, session.status)),
+                    ..._counts(l, session).map(Text.new),
+                  ],
+                ),
+        ),
       ),
     );
   }
@@ -52,15 +64,3 @@ class LastCleanupCard extends ConsumerWidget {
     ];
   }
 }
-
-/// The status of a finished cleanup in the user's language.
-String sessionStatusText(AppLocalizations l, SessionStatus status) =>
-    switch (status) {
-      SessionStatus.completed => l.sessionCompleted,
-      SessionStatus.failed => l.sessionFailed,
-      SessionStatus.cancelled => l.sessionCancelled,
-      SessionStatus.reverted => l.sessionReverted,
-      SessionStatus.partiallyReverted => l.sessionPartiallyReverted,
-      // Not finished: never the last cleanup.
-      SessionStatus.planned || SessionStatus.running => '',
-    };

@@ -2,7 +2,9 @@ import 'package:file_organizer/core/classify/builtin_rules.dart';
 import 'package:file_organizer/core/classify/rule_classifier.dart';
 import 'package:file_organizer/core/model/category.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
+import 'package:file_organizer/core/model/operation.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
+import 'package:file_organizer/core/model/session_stats.dart';
 import 'package:file_organizer/core/planner/planner.dart';
 import 'package:file_organizer/core/workflow/workflow.dart';
 import 'package:file_organizer/state/cleanup/cleanup_view.dart';
@@ -11,7 +13,17 @@ import 'package:file_organizer/state/cleanup/cleanup_view.dart';
 /// [cancelling]: "Cancel" was asked for and the work has not stopped yet.
 CleanupView cleanupViewOf(WorkflowState? state, {bool cancelling = false}) =>
     switch (state) {
-      null || Idle() || Finished() => const AtHome(),
+      null || Idle() => const AtHome(),
+      Finished(:final sessions) => CleanupResult(
+        kind: switch (state) {
+          Completed() => ResultKind.completed,
+          Cancelled() => ResultKind.cancelled,
+          Reverted() => ResultKind.reverted,
+          PartiallyReverted() => ResultKind.partiallyReverted,
+        },
+        sessions: sessions.map((s) => s.id),
+        totals: addUp(sessions.map((s) => s.stats)),
+      ),
       Scanning(:final filesProcessed, :final sourceIndex, :final sourceCount) =>
         InProgress(
           stage: ProgressStage.scanning,
@@ -55,7 +67,9 @@ CleanupView cleanupViewOf(WorkflowState? state, {bool cancelling = false}) =>
       PlanReady() => _review(state),
       Failed(:final reason) => PlanFailed(reason),
       Interrupted(:final recovered, :final unavailable) => InterruptedCleanup(
-        recovered: recovered.length,
+        sessions: recovered.length,
+        operations: recovered.fold(0, (n, r) => n + r.recovered.length),
+        problems: problemsOf([for (final r in recovered) ...r.recovered]),
         unavailable: unavailable.length,
       ),
     };
@@ -159,4 +173,47 @@ bool isMediaFile(LogicalPath path) {
   final dot = name.lastIndexOf('.');
   return dot > 0 &&
       _mediaExtensions.contains(name.substring(dot + 1).toLowerCase());
+}
+
+/// The statistics of several sessions added up.
+SessionStats addUp(Iterable<SessionStats> all) {
+  var total = 0, done = 0, failed = 0, skipped = 0;
+  var reverted = 0, revertSkipped = 0, removedBytes = 0;
+  for (final stats in all) {
+    total += stats.total;
+    done += stats.done;
+    failed += stats.failed;
+    skipped += stats.skipped;
+    reverted += stats.reverted;
+    revertSkipped += stats.revertSkipped;
+    removedBytes += stats.removedBytes;
+  }
+  return SessionStats(
+    total: total,
+    done: done,
+    failed: failed,
+    skipped: skipped,
+    reverted: reverted,
+    revertSkipped: revertSkipped,
+    removedBytes: removedBytes,
+  );
+}
+
+/// The problems among [operations] (an error that is still current:
+/// failed, skipped, or not undone), "needs attention" first, otherwise in
+/// order.
+List<ProblemView> problemsOf(Iterable<Operation> operations) {
+  final problems = [
+    for (final op in operations)
+      if (op.status.hasError && op.error != null)
+        ProblemView(
+          type: op.type,
+          path: op.fromPath ?? op.toPath!,
+          problem: op.error!,
+        ),
+  ];
+  return [
+    ...problems.where((p) => p.needsAttention),
+    ...problems.where((p) => !p.needsAttention),
+  ];
 }

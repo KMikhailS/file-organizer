@@ -6,14 +6,15 @@ import 'package:file_organizer/state/cleanup/cleanup_providers.dart';
 import 'package:file_organizer/state/cleanup/cleanup_view.dart';
 import 'package:file_organizer/state/notification_permission.dart';
 import 'package:file_organizer/state/providers.dart';
+import 'package:file_organizer/ui/cleanup/interrupted_screen.dart';
 import 'package:file_organizer/ui/cleanup/plan_failed_screen.dart';
 import 'package:file_organizer/ui/cleanup/plan_screen.dart';
 import 'package:file_organizer/ui/cleanup/progress_screen.dart';
+import 'package:file_organizer/ui/cleanup/result_screen.dart';
 import 'package:file_organizer/ui/home/home_screen.dart';
 import 'package:file_organizer/ui/onboarding/onboarding_screen.dart';
 import 'package:file_organizer/ui/splash_screen.dart';
 import 'package:file_organizer/ui/startup_failed_screen.dart';
-import 'package:file_organizer/ui/work/temporary_work_screen.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -67,8 +68,7 @@ class _RootScreenState extends ConsumerState<RootScreen>
 }
 
 /// The home screen, or the cleanup screen of what the workflow does: its
-/// progress, the plan, a failure; an interrupted cleanup on the temporary
-/// screen until task 14.
+/// progress, the plan, the result, a failure, an interrupted cleanup.
 class _HomeOrWork extends ConsumerWidget {
   const _HomeOrWork();
 
@@ -79,7 +79,8 @@ class _HomeOrWork extends ConsumerWidget {
         final InProgress progress => ProgressScreen(progress: progress),
         final PlanReview review => PlanScreen(review: review),
         PlanFailed(:final reason) => PlanFailedScreen(reason: reason),
-        final InterruptedCleanup interrupted => TemporaryWorkScreen(
+        final CleanupResult result => ResultScreen(result: result),
+        final InterruptedCleanup interrupted => InterruptedScreen(
           interrupted: interrupted,
         ),
       };

@@ -755,7 +755,7 @@ abstract class AppLocalizations {
   /// Status of a cleanup.
   ///
   /// In en, this message translates to:
-  /// **'Undone: everything is back'**
+  /// **'Undone'**
   String get sessionReverted;
 
   /// Status of a cleanup.
@@ -949,6 +949,228 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count, plural, =1{1 storage was not available} other{{count} storages were not available}}'**
   String warningUnavailableSources(int count);
+
+  /// Result title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup done'**
+  String get resultCompleted;
+
+  /// Result title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup stopped'**
+  String get resultCancelled;
+
+  /// Result title: every operation that could be undone was undone (a lost file still shows among the problems).
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup undone'**
+  String get resultReverted;
+
+  /// Result title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup partly undone'**
+  String get resultPartiallyReverted;
+
+  /// Result count.
+  ///
+  /// In en, this message translates to:
+  /// **'Done: {count}'**
+  String countDone(int count);
+
+  /// Result count.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped: {count}'**
+  String countSkipped(int count);
+
+  /// Result count.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {count}'**
+  String countFailed(int count);
+
+  /// Result count.
+  ///
+  /// In en, this message translates to:
+  /// **'Brought back: {count}'**
+  String countReverted(int count);
+
+  /// Result count.
+  ///
+  /// In en, this message translates to:
+  /// **'Not brought back: {count}'**
+  String countNotReverted(int count);
+
+  /// Problems list title.
+  ///
+  /// In en, this message translates to:
+  /// **'What did not work'**
+  String get problemsTitle;
+
+  /// Marks a problem recovery could not sort out.
+  ///
+  /// In en, this message translates to:
+  /// **'Needs attention'**
+  String get needsAttention;
+
+  /// Undoes the cleanup just done.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo the cleanup'**
+  String get undoCleanupButton;
+
+  /// Closes a result.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeButton;
+
+  /// Undo confirmation title.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring the files back?'**
+  String get undoConfirmTitle;
+
+  /// Undo confirmation text.
+  ///
+  /// In en, this message translates to:
+  /// **'Every file of this cleanup goes back where it was.'**
+  String get undoConfirmAll;
+
+  /// Undo confirmation text.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file goes back where it was.} other{{count} files go back where they were.}}'**
+  String undoConfirmFiles(int count);
+
+  /// Confirms an undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back'**
+  String get undoConfirmYes;
+
+  /// Interrupted cleanup title.
+  ///
+  /// In en, this message translates to:
+  /// **'The last cleanup was interrupted'**
+  String get interruptedTitle;
+
+  /// Interrupted cleanup explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'The app stopped in the middle of a cleanup. Every operation in progress was checked: what was done stays done, nothing was overwritten.'**
+  String get interruptedText;
+
+  /// Interrupted cleanup count.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 operation sorted out} other{{count} operations sorted out}}'**
+  String interruptedOperations(int count);
+
+  /// Interrupted sessions of an unavailable storage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 cleanup waits for its storage to come back} other{{count} cleanups wait for their storage to come back}}'**
+  String interruptedUnavailable(int count);
+
+  /// Plans what is left.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish the cleanup'**
+  String get interruptedFinish;
+
+  /// Undoes the interrupted cleanup.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo it'**
+  String get interruptedUndo;
+
+  /// Leaves the decision for later.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get interruptedLater;
+
+  /// History screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get historyTitle;
+
+  /// Status of a session whose storage was not available for recovery.
+  ///
+  /// In en, this message translates to:
+  /// **'Interrupted'**
+  String get sessionInterrupted;
+
+  /// Session screen title.
+  ///
+  /// In en, this message translates to:
+  /// **'Cleanup of {date}'**
+  String sessionTitle(String date);
+
+  /// Undoes a past session.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo the whole cleanup'**
+  String get undoWholeButton;
+
+  /// Undoes one group of a past session.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring this group back'**
+  String get undoGroupButton;
+
+  /// Undoes one file of a past session.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring back'**
+  String get undoFileButton;
+
+  /// A file whose quarantine copy was purged.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarantine emptied: cannot be brought back'**
+  String get purgedMark;
+
+  /// History file status.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get fileDone;
+
+  /// History file status.
+  ///
+  /// In en, this message translates to:
+  /// **'Brought back'**
+  String get fileReverted;
+
+  /// A past session with nothing to undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing left to undo'**
+  String get nothingToUndo;
+
+  /// History group size.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 file} other{{count} files}}'**
+  String groupFiles(int count);
+
+  /// History group of duplicates.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicates'**
+  String get groupDuplicatesTitle;
+
+  /// History group of moves.
+  ///
+  /// In en, this message translates to:
+  /// **'To {folder}'**
+  String groupMoveTitle(String folder);
 }
 
 class _AppLocalizationsDelegate

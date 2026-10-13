@@ -407,7 +407,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionCancelled => 'Stopped';
 
   @override
-  String get sessionReverted => 'Undone: everything is back';
+  String get sessionReverted => 'Undone';
 
   @override
   String get sessionPartiallyReverted => 'Partly undone';
@@ -589,5 +589,164 @@ class AppLocalizationsEn extends AppLocalizations {
       one: '1 storage was not available',
     );
     return '$_temp0';
+  }
+
+  @override
+  String get resultCompleted => 'Cleanup done';
+
+  @override
+  String get resultCancelled => 'Cleanup stopped';
+
+  @override
+  String get resultReverted => 'Cleanup undone';
+
+  @override
+  String get resultPartiallyReverted => 'Cleanup partly undone';
+
+  @override
+  String countDone(int count) {
+    return 'Done: $count';
+  }
+
+  @override
+  String countSkipped(int count) {
+    return 'Skipped: $count';
+  }
+
+  @override
+  String countFailed(int count) {
+    return 'Failed: $count';
+  }
+
+  @override
+  String countReverted(int count) {
+    return 'Brought back: $count';
+  }
+
+  @override
+  String countNotReverted(int count) {
+    return 'Not brought back: $count';
+  }
+
+  @override
+  String get problemsTitle => 'What did not work';
+
+  @override
+  String get needsAttention => 'Needs attention';
+
+  @override
+  String get undoCleanupButton => 'Undo the cleanup';
+
+  @override
+  String get closeButton => 'Close';
+
+  @override
+  String get undoConfirmTitle => 'Bring the files back?';
+
+  @override
+  String get undoConfirmAll =>
+      'Every file of this cleanup goes back where it was.';
+
+  @override
+  String undoConfirmFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files go back where they were.',
+      one: '1 file goes back where it was.',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get undoConfirmYes => 'Bring back';
+
+  @override
+  String get interruptedTitle => 'The last cleanup was interrupted';
+
+  @override
+  String get interruptedText =>
+      'The app stopped in the middle of a cleanup. Every operation in progress was checked: what was done stays done, nothing was overwritten.';
+
+  @override
+  String interruptedOperations(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count operations sorted out',
+      one: '1 operation sorted out',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String interruptedUnavailable(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cleanups wait for their storage to come back',
+      one: '1 cleanup waits for its storage to come back',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get interruptedFinish => 'Finish the cleanup';
+
+  @override
+  String get interruptedUndo => 'Undo it';
+
+  @override
+  String get interruptedLater => 'Not now';
+
+  @override
+  String get historyTitle => 'History';
+
+  @override
+  String get sessionInterrupted => 'Interrupted';
+
+  @override
+  String sessionTitle(String date) {
+    return 'Cleanup of $date';
+  }
+
+  @override
+  String get undoWholeButton => 'Undo the whole cleanup';
+
+  @override
+  String get undoGroupButton => 'Bring this group back';
+
+  @override
+  String get undoFileButton => 'Bring back';
+
+  @override
+  String get purgedMark => 'Quarantine emptied: cannot be brought back';
+
+  @override
+  String get fileDone => 'Done';
+
+  @override
+  String get fileReverted => 'Brought back';
+
+  @override
+  String get nothingToUndo => 'Nothing left to undo';
+
+  @override
+  String groupFiles(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count files',
+      one: '1 file',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get groupDuplicatesTitle => 'Duplicates';
+
+  @override
+  String groupMoveTitle(String folder) {
+    return 'To $folder';
   }
 }

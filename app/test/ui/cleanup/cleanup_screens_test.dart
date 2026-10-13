@@ -164,9 +164,8 @@ void main() {
     expect(applyEnabled(tester), isFalse);
   });
 
-  testWidgets('"Apply": progress, then home; only the approved files moved', (
-    tester,
-  ) async {
+  testWidgets('"Apply": progress, then the result; only the approved files '
+      'moved', (tester) async {
     await openPlan(tester);
     await tapCheckbox(tester, 'To Music');
     final gate = holdAt(FsMethod.move);
@@ -175,7 +174,11 @@ void main() {
     expect(find.text('Cancel'), findsOneWidget);
 
     gate.complete();
-    await tester.settleUntil(find.text('Tidy up'));
+    await tester.settleUntil(find.text('Cleanup done'));
+    expect(find.text('Cleanup done'), findsOneWidget);
+    expect(find.textContaining('Done: '), findsOneWidget);
+    expect(find.text('What did not work'), findsNothing);
+    await tester.tapText('Close');
     expect(find.text('Tidy up'), findsOneWidget);
     expect(find.text('Done'), findsOneWidget);
     expect(files.isFile('Download/song.mp3'), isTrue);
@@ -208,7 +211,9 @@ void main() {
     );
 
     gate.complete();
-    await tester.settleUntil(find.text('Tidy up'));
+    await tester.settleUntil(find.text('Cleanup stopped'));
+    expect(find.text('Undo the cleanup'), findsOneWidget);
+    await tester.tapText('Close');
     expect(find.text('Stopped'), findsOneWidget);
     expect(files.isFile('Download/notes.txt'), isTrue);
   });
@@ -240,7 +245,8 @@ void main() {
   testWidgets('after a cleanup there is nothing to do', (tester) async {
     await openPlan(tester);
     await tester.tapText('Apply');
-    await tester.settleUntil(find.text('Tidy up'));
+    await tester.settleUntil(find.text('Close'));
+    await tester.tapText('Close');
     await tester.tapText('Tidy up');
     await tester.settleUntil(find.text('Everything is in order'));
     expect(find.text('Everything is in order'), findsOneWidget);
