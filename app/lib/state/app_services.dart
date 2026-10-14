@@ -10,6 +10,7 @@ import 'package:file_organizer/core/ports/id_generator.dart';
 import 'package:file_organizer/data/db/app_database.dart';
 import 'package:file_organizer/platform/android/android_file_source.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
+import 'package:file_organizer/platform/android/test_root_storage.dart';
 import 'package:file_organizer/platform/posix/child_folders.dart' as posix;
 import 'package:file_organizer/platform/posix/posix_paths.dart';
 import 'package:file_organizer/platform/services/random_id_generator.dart';
@@ -29,8 +30,13 @@ final class AppServices {
 
   /// The Android services: the database file in the app's private storage,
   /// the shared storage through [AndroidFileSource].
-  factory AppServices.android() {
-    final native = AndroidNative();
+  ///
+  /// With [testRoot] (test builds only, see `testStorageRoot`) that folder
+  /// stands for the root of the shared storage.
+  factory AppServices.android({String? testRoot}) {
+    final native = AndroidNative(
+      storage: testRoot == null ? null : TestRootStorage(testRoot),
+    );
     const clock = SystemClock();
     return AppServices(
       native: native,

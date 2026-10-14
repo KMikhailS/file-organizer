@@ -14,6 +14,7 @@ import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/core/ports/file_source.dart';
 import 'package:file_organizer/core/ports/file_stat.dart';
 import 'package:file_organizer/platform/posix/errno_kind.dart';
+import 'package:file_organizer/platform/posix/file_size.dart';
 import 'package:file_organizer/platform/posix/hash_worker.dart';
 import 'package:file_organizer/platform/posix/libc.dart';
 import 'package:file_organizer/platform/posix/move_probe.dart';
@@ -45,7 +46,9 @@ final class PosixFileSource implements FileSource {
     required int pageSize,
     required int hashBlockSize,
     required ProbeResult probe,
-  }) : _hasher = HashWorker(blockSize: hashBlockSize),
+    required SizeReader sizes,
+  }) : _sizes = sizes,
+       _hasher = HashWorker(blockSize: hashBlockSize),
        moveMechanism = probe.mechanism,
        probeProblem = probe.problem {
     _lister = PosixLister(
@@ -53,6 +56,7 @@ final class PosixFileSource implements FileSource {
       paths: _paths,
       pageSize: pageSize,
       hiddenRootFolder: AppFolder.name,
+      sizes: sizes,
     );
     final mechanism = probe.mechanism;
     _mover = mechanism == null ? null : _moverFor(_paths, _clock, mechanism);
@@ -64,7 +68,8 @@ final class PosixFileSource implements FileSource {
   /// has no capabilities.
   ///
   /// [forceMechanism] is for tests: the fallback of decision A.5 runs on a
-  /// file system that supports the main mechanism too.
+  /// file system that supports the main mechanism too. [sizes] is for
+  /// tests too: it can act as a file system that reports stale sizes.
   static Future<PosixFileSource> open({
     required SourceId sourceId,
     required String root,
@@ -72,6 +77,7 @@ final class PosixFileSource implements FileSource {
     int pageSize = defaultPageSize,
     int hashBlockSize = 1024 * 1024,
     @visibleForTesting MoveMechanism? forceMechanism,
+    @visibleForTesting SizeReader sizes = const SizeReader(),
   }) async {
     final paths = PosixPaths(root);
     final probe =
@@ -90,6 +96,7 @@ final class PosixFileSource implements FileSource {
       pageSize: pageSize,
       hashBlockSize: hashBlockSize,
       probe: probe,
+      sizes: sizes,
     );
   }
 
@@ -107,6 +114,7 @@ final class PosixFileSource implements FileSource {
 
   final PosixPaths _paths;
   final Clock _clock;
+  final SizeReader _sizes;
   final HashWorker _hasher;
   late final PosixLister _lister;
   late final NoReplaceMover? _mover;
@@ -194,7 +202,9 @@ final class PosixFileSource implements FileSource {
           real: real,
           stat: FileStat(
             kind: kind,
-            size: kind == FileKind.file ? stat.size : 0,
+            size: kind == FileKind.file
+                ? await _sizes.size(real, stat.size)
+                : 0,
             modifiedAt: stat.modified,
           ),
         ));
@@ -480,8 +490,11 @@ final class PosixFileSource implements FileSource {
       if (description == null || description.original != original) {
         continue;
       }
-      final file = Libc.instance.lstat(_paths.real(folder.child('$n'))).info;
-      if (file != null && file.isRegularFile && file.size == description.size) {
+      final real = _paths.real(folder.child('$n'));
+      final file = Libc.instance.lstat(real).info;
+      if (file != null &&
+          file.isRegularFile &&
+          await _sizes.size(real, file.size) == description.size) {
         return FileSuccess(AppFolder.ref(sessionId, n));
       }
     }

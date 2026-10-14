@@ -1,4 +1,5 @@
 import 'package:file_organizer/core/model/ids.dart';
+import 'package:file_organizer/platform/posix/file_size.dart';
 import 'package:file_organizer/platform/posix/no_replace_mover.dart';
 import 'package:file_organizer/platform/posix/posix_file_source.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,7 @@ Future<PosixFileSource> openPosix(
   int hashBlockSize = 1024 * 1024,
   MoveMechanism? mechanism,
   FakeClock? clock,
+  SizeReader sizes = const SizeReader(),
 }) async {
   final source = await PosixFileSource.open(
     sourceId: const SourceId('posix'),
@@ -21,6 +23,7 @@ Future<PosixFileSource> openPosix(
     pageSize: pageSize,
     hashBlockSize: hashBlockSize,
     forceMechanism: mechanism,
+    sizes: sizes,
   );
   addTearDown(source.dispose);
   return source;

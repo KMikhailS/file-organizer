@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.PowerManager
 import android.os.SystemClock
 
 /**
@@ -20,6 +21,12 @@ import android.os.SystemClock
  *
  * It does no work itself; the Dart code runs in the same process. All state
  * lives on the main thread.
+ *
+ * While it runs it holds a partial wake lock: a foreground service alone
+ * does not keep the CPU awake, and on the user's phone a cleanup with the
+ * screen off and no charger stood still for minutes
+ * (docs/stage2_android.md, 5.26). Every progress update renews the lock's
+ * time limit, so a hung run releases it after [WAKE_LOCK_TIMEOUT_MS].
  */
 class CleanupService : Service() {
 
@@ -47,6 +54,7 @@ class CleanupService : Service() {
         running = true
         starting = false
         lastPosted = SystemClock.elapsedRealtime()
+        holdWakeLock(this)
         if (stopRequested) {
             // stop() came while the service was starting.
             stopSelf()
@@ -65,6 +73,8 @@ class CleanupService : Service() {
         starting = false
         stopRequested = false
         handler.removeCallbacks(postLatest)
+        wakeLock?.let { if (it.isHeld) it.release() }
+        wakeLock = null
         stopForeground(STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }
@@ -75,6 +85,14 @@ class CleanupService : Service() {
 
         /** At most this many notification updates per second. */
         private const val MIN_UPDATE_INTERVAL_MS = 250L
+
+        /** The wake lock ends this long after the last progress update. */
+        const val WAKE_LOCK_TIMEOUT_MS = 30 * 60 * 1000L
+
+        /** The tag of the wake lock, as `dumpsys power` shows it. */
+        const val WAKE_LOCK_TAG = "FileOrganizer:cleanup"
+
+        private var wakeLock: PowerManager.WakeLock? = null
 
         /** Whether the service runs in the foreground. */
         @Volatile
@@ -136,6 +154,19 @@ class CleanupService : Service() {
             lastPosted = SystemClock.elapsedRealtime()
             context.getSystemService(NotificationManager::class.java)
                 .notify(NOTIFICATION_ID, build(context, notice))
+            holdWakeLock(context)
+        }
+
+        /** Takes the wake lock, or renews its time limit. */
+        private fun holdWakeLock(context: Context) {
+            val lock = wakeLock ?: context.getSystemService(PowerManager::class.java)
+                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKE_LOCK_TAG)
+                .also {
+                    // One acquire per update would pile up otherwise.
+                    it.setReferenceCounted(false)
+                    wakeLock = it
+                }
+            lock.acquire(WAKE_LOCK_TIMEOUT_MS)
         }
 
         private fun ensureChannel(context: Context, name: String) {

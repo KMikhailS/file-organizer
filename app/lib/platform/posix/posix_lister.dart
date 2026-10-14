@@ -8,6 +8,7 @@ import 'package:file_organizer/core/ports/file_error.dart';
 import 'package:file_organizer/core/ports/file_list_page.dart';
 import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/platform/posix/errno_kind.dart';
+import 'package:file_organizer/platform/posix/file_size.dart';
 import 'package:file_organizer/platform/posix/posix_paths.dart';
 
 /// Lists the files of a POSIX folder tree in pages
@@ -33,6 +34,7 @@ final class PosixLister {
     required this.paths,
     required this.pageSize,
     this.hiddenRootFolder,
+    this.sizes = const SizeReader(),
   }) {
     if (pageSize < 1) {
       throw ArgumentError.value(pageSize, 'pageSize', 'must be positive');
@@ -48,6 +50,9 @@ final class PosixLister {
   /// A folder of the root that is never listed, compared without case (the
   /// adapter's own folder).
   final String? hiddenRootFolder;
+
+  /// Sizes of files, read past a stale size of the file system.
+  final SizeReader sizes;
 
   /// How many entries of one folder are examined at the same time.
   static const int _statBatch = 64;
@@ -251,7 +256,7 @@ final class PosixLister {
       default:
         final stat = await FileStat.stat(path);
         return stat.type == FileSystemEntityType.file
-            ? _FileChild(name, stat.size, stat.modified)
+            ? _FileChild(name, await sizes.size(path, stat.size), stat.modified)
             : null;
     }
   }
