@@ -13,6 +13,26 @@
 #                    and on a phone (API 33) stat through FUSE kept reporting
 #                    size 0 for some files just written by the shell
 
+#   wait_storage_writable  waits (up to 2 minutes) until adb can write
+#                    files to the shared storage: right after boot (CI)
+#                    it can list it but a push fails with "Operation not
+#                    permitted". Probes in its own folder next to the test
+#                    root and removes it.
+wait_storage_writable() {
+  local probe=$ROOT.probe
+  for _ in $(seq 1 60); do
+    if "${ADB[@]}" shell "mkdir -p '$probe'" >/dev/null 2>&1 &&
+      "${ADB[@]}" push integration_test/native/fixtures/photo.jpg "$probe/p.jpg" >/dev/null 2>&1; then
+      "${ADB[@]}" shell "rm -rf '$probe'"
+      return 0
+    fi
+    sleep 2
+  done
+  "${ADB[@]}" shell "rm -rf '$probe'" || true
+  say "the shared storage did not become writable"
+  return 1
+}
+
 make_test_root() {
   say "the test root: duplicate photos, a typical Download folder, $NOTES notes"
   PHOTO=integration_test/native/fixtures/photo.jpg

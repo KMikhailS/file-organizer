@@ -74,10 +74,7 @@ cleanup() {
 trap cleanup EXIT
 "${ADB[@]}" shell settings put global hide_error_dialogs 1
 
-for _ in $(seq 1 60); do
-  "${ADB[@]}" shell "ls /storage/emulated/0/" >/dev/null 2>&1 && break
-  sleep 1
-done
+wait_storage_writable || exit 1
 if "${ADB[@]}" shell "ls -d $ROOT" >/dev/null 2>&1; then
   say "refusing: $ROOT exists already (left from another run?)"
   trap - EXIT
