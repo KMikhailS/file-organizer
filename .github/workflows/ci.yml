@@ -96,7 +96,7 @@ jobs:
     # root of an emulator; the other device suites run locally.
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: app
@@ -117,8 +117,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get --enforce-lockfile
 
-      - name: Gradle configuration
-        run: flutter build apk --config-only
+      - name: Build debug APK
+        # Before the emulator starts: a cold Gradle build (with the native
+        # sqlite3 library) takes long on CI, and the runner script then
+        # finds everything up to date.
+        run: flutter build apk --debug
 
       - name: Enable KVM
         run: |
@@ -138,8 +141,12 @@ jobs:
           working-directory: app
           script: FLUTTER=flutter integration_test/full_cycle/run_android.sh emulator-5554
 
+      - name: Show the end of the test log
+        if: failure() || cancelled()
+        run: tail -60 build/full_cycle_test.log || true
+
       - name: Keep the test log
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: full-cycle-log
