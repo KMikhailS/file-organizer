@@ -8,6 +8,7 @@ import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/core/ports/file_source.dart';
 import 'package:file_organizer/core/ports/id_generator.dart';
 import 'package:file_organizer/data/db/app_database.dart';
+import 'package:file_organizer/data/db/sqlite_setup.dart';
 import 'package:file_organizer/platform/android/android_file_source.dart';
 import 'package:file_organizer/platform/android/android_native.dart';
 import 'package:file_organizer/platform/android/test_root_storage.dart';
@@ -42,7 +43,12 @@ final class AppServices {
       native: native,
       clock: clock,
       ids: RandomIdGenerator(),
-      openDatabase: () => AppDatabase(driftDatabase(name: 'file_organizer')),
+      openDatabase: () => AppDatabase(
+        driftDatabase(
+          name: 'file_organizer',
+          native: const DriftNativeOptions(setup: configureSqlite),
+        ),
+      ),
       openSource: (source) => AndroidFileSource.open(
         sourceId: source.id,
         root: source.location,

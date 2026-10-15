@@ -25,10 +25,18 @@ class PipelineHarness {
     LayoutTemplate? template,
     Classifier? classifier,
     this.overrides = const [],
+    this.executorBatchSize = Executor.defaultBatchSize,
+    this.undoBatchSize = UndoService.defaultBatchSize,
   }) : template = template ?? russianTemplate(),
        classifier = classifier ?? RuleClassifier();
 
   final InMemoryFileSource fs;
+
+  /// Moves and folders per journal batch of the executor.
+  final int executorBatchSize;
+
+  /// Results per journal batch of the undo.
+  final int undoBatchSize;
   final LayoutTemplate template;
   final Classifier classifier;
   final List<ZoneOverride> overrides;
@@ -51,6 +59,7 @@ class PipelineHarness {
     sessions: sessions,
     clock: clock,
     ids: executionIds,
+    batchSize: executorBatchSize,
   );
 
   late final UndoService undoService = UndoService(
@@ -58,6 +67,7 @@ class PipelineHarness {
     sessions: sessions,
     clock: clock,
     restoredLabel: restoredLabel,
+    batchSize: undoBatchSize,
   );
 
   final InMemorySettingsRepository settings = InMemorySettingsRepository();

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:file_organizer/core/executor/execution.dart';
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
@@ -17,11 +19,15 @@ void main() {
   late Executor executor;
   late Plan plan;
 
-  Executor newExecutor({OperationJournal? using}) => Executor(
+  Executor newExecutor({
+    OperationJournal? using,
+    int batchSize = Executor.defaultBatchSize,
+  }) => Executor(
     journal: using ?? journal,
     sessions: sessions,
     clock: FakeClock(autoAdvance: const Duration(seconds: 1)),
     ids: SequentialIdGenerator('x'),
+    batchSize: batchSize,
   );
 
   Future<void> setUpWith(InMemoryFileSource source) async {
@@ -318,7 +324,8 @@ void main() {
   group('cancellation', () {
     setUp(() => setUpWith(InMemoryFileSource()..withTypicalDownloadFolder()));
 
-    test('stops after the current operation', () async {
+    test('with batches of one, stops after the current operation', () async {
+      executor = newExecutor(batchSize: 1);
       final run = executor.start(fs, plan);
       run.progress.listen((p) {
         if (p.processed == 3) {
@@ -332,6 +339,25 @@ void main() {
       expect(ops, hasLength(3));
       expect(ops.map((o) => o.status), everyElement(OperationStatus.done));
       expect(session.stats.total, 3);
+      expect(fs.isFile('Download/song.mp3'), isTrue, reason: 'not reached');
+    });
+
+    test('stops at the end of the current batch', () async {
+      executor = newExecutor(batchSize: 2);
+      final run = executor.start(fs, plan);
+      run.progress.listen((p) {
+        if (p.processed == 3) {
+          run.cancel();
+        }
+      });
+      final session = await run.result;
+
+      expect(session.status, SessionStatus.cancelled);
+      final ops = await journal.bySession(session.id);
+      // The third operation opens a batch of up to two: at most one more.
+      expect(ops.length, inInclusiveRange(3, 4));
+      expect(ops.map((o) => o.status), everyElement(OperationStatus.done));
+      expect(session.stats.total, ops.length);
       expect(fs.isFile('Download/song.mp3'), isTrue, reason: 'not reached');
     });
 
@@ -375,6 +401,7 @@ void main() {
     setUp(() => setUpWith(InMemoryFileSource()..withTypicalDownloadFolder()));
 
     test('after the file system call leaves the operation pending', () async {
+      executor = newExecutor(batchSize: 1);
       fs.crashOn(
         methods: {FsMethod.move},
         nth: 2,
@@ -392,6 +419,36 @@ void main() {
       expect(
         ops.take(ops.length - 1).map((o) => o.status),
         everyElement(OperationStatus.done),
+      );
+    });
+
+    test('in the middle of a batch leaves the whole batch pending', () async {
+      fs.crashOn(
+        methods: {FsMethod.move},
+        nth: 2,
+        point: CrashPoint.afterEffect,
+      );
+      final batches = _BatchJournal(journal);
+      final run = newExecutor(using: batches).start(fs, plan);
+      await expectLater(run.result, throwsA(isA<SimulatedCrash>()));
+
+      final ops = await journal.bySession(run.sessionId);
+      final last = batches.appended.last;
+      expect(
+        [
+          for (final o in ops)
+            if (o.status == OperationStatus.pending) o.id,
+        ],
+        last,
+        reason: 'the batch of the crash, all of it',
+      );
+      expect(
+        [
+          for (final o in ops)
+            if (o.status != OperationStatus.pending) o.status,
+        ],
+        everyElement(OperationStatus.done),
+        reason: 'earlier batches',
       );
     });
 
@@ -429,6 +486,85 @@ void main() {
     }
   });
 
+  group('batches', () {
+    test('up to the batch size; a quarantine is a batch of its own', () async {
+      await setUpWith(
+        InMemoryFileSource()
+          ..withTypicalDownloadFolder()
+          ..withNotes(70),
+      );
+      final batches = _BatchJournal(journal);
+      await newExecutor(using: batches).start(fs, plan).result;
+      final ops = {
+        for (final o in await journal.bySession(
+          (await sessions.all()).single.id,
+        ))
+          o.id: o,
+      };
+
+      expect(batches.appended, isNotEmpty);
+      expect(
+        [for (final b in batches.appended) b.length].reduce(math.max),
+        Executor.defaultBatchSize,
+      );
+      for (final batch in batches.appended) {
+        final types = [for (final id in batch) ops[id]!.type];
+        if (types.any(
+          (t) => t == OperationType.quarantine || t == OperationType.addToAlbum,
+        )) {
+          expect(types, hasLength(1), reason: 'alone: $types');
+        }
+        final seqs = [for (final id in batch) ops[id]!.seq];
+        expect(seqs, [for (var i = 0; i < seqs.length; i++) seqs.first + i]);
+      }
+      expect(batches.appended.expand((b) => b).toList(), [
+        for (final o in ops.values) o.id,
+      ], reason: 'every operation once, in plan order');
+      expect(batches.updated, batches.appended, reason: 'results per batch');
+    });
+
+    test('a quarantine after moves still runs alone', () async {
+      // The planner puts duplicates first; the executor must not rely on it.
+      await setUpWith(InMemoryFileSource()..withTypicalDownloadFolder());
+      bool alone(PlannedOperation o) =>
+          o.type == OperationType.quarantine ||
+          o.type == OperationType.addToAlbum;
+      final reordered = Plan(
+        operations: [
+          ...plan.operations.where((o) => !alone(o)),
+          ...plan.operations.where(alone),
+        ],
+        unresolved: plan.unresolved,
+        duplicateGroups: plan.duplicateGroups,
+      );
+      final batches = _BatchJournal(journal);
+      final session = await newExecutor(using: batches)
+          .start(fs, reordered)
+          .result;
+      final ops = {
+        for (final o in await journal.bySession(session.id)) o.id: o,
+      };
+      final quarantines = [
+        for (final o in ops.values)
+          if (o.type == OperationType.quarantine) o.id,
+      ];
+      expect(quarantines, isNotEmpty);
+      for (final batch in batches.appended) {
+        if (batch.any(quarantines.contains)) {
+          expect(batch, hasLength(1));
+        }
+      }
+      expect(
+        ops.values.map((o) => o.status),
+        everyElement(OperationStatus.done),
+      );
+    });
+
+    test('a batch size below one is refused', () {
+      expect(() => newExecutor(batchSize: 0), throwsArgumentError);
+    });
+  });
+
   test('a plan of another source is refused', () async {
     await setUpWith(InMemoryFileSource()..withTypicalDownloadFolder());
     final other = InMemoryFileSource(sourceId: const SourceId('other'));
@@ -453,6 +589,18 @@ final class _LoggingJournal implements OperationJournal {
   Future<void> update(Operation operation) async {
     await _inner.update(operation);
     _log.add('${operation.status.name} ${operation.id}');
+  }
+
+  @override
+  Future<void> appendAll(List<Operation> operations) async {
+    await _inner.appendAll(operations);
+    _log.addAll([for (final o in operations) 'pending ${o.id}']);
+  }
+
+  @override
+  Future<void> updateAll(List<Operation> operations) async {
+    await _inner.updateAll(operations);
+    _log.addAll([for (final o in operations) '${o.status.name} ${o.id}']);
   }
 
   @override
@@ -558,4 +706,45 @@ final class _LoggingSource implements FileSource {
   @override
   Future<FileResult<void>> removeFromAlbum(LogicalPath path) =>
       _logged('removeFromAlbum', path, _inner.removeFromAlbum(path));
+}
+
+/// Records which operations each batch write carried.
+final class _BatchJournal implements OperationJournal {
+  _BatchJournal(this._inner);
+
+  final OperationJournal _inner;
+  final List<List<OperationId>> appended = [];
+  final List<List<OperationId>> updated = [];
+
+  @override
+  Future<void> append(Operation operation) => appendAll([operation]);
+
+  @override
+  Future<void> update(Operation operation) => updateAll([operation]);
+
+  @override
+  Future<void> appendAll(List<Operation> operations) async {
+    await _inner.appendAll(operations);
+    appended.add([for (final o in operations) o.id]);
+  }
+
+  @override
+  Future<void> updateAll(List<Operation> operations) async {
+    await _inner.updateAll(operations);
+    updated.add([for (final o in operations) o.id]);
+  }
+
+  @override
+  Future<Operation?> byId(OperationId id) => _inner.byId(id);
+
+  @override
+  Future<List<Operation>> doneQuarantinesBefore(DateTime cutoff) =>
+      _inner.doneQuarantinesBefore(cutoff);
+
+  @override
+  Future<List<Operation>> bySession(
+    SessionId sessionId, {
+    String? groupKey,
+    bool reverse = false,
+  }) => _inner.bySession(sessionId, groupKey: groupKey, reverse: reverse);
 }

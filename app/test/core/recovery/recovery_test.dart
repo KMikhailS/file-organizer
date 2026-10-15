@@ -1,3 +1,4 @@
+import 'package:file_organizer/core/executor/executor.dart';
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/recovery/recovery.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,14 +14,17 @@ void main() {
   late SessionId sessionId;
 
   /// Plans a cleanup of [source] and runs it until the first call of
-  /// [method] crashes at [point].
+  /// [method] crashes at [point]. One operation per journal batch: these
+  /// tests are about how one interrupted operation is judged (a crash in a
+  /// batch has its own group).
   Future<void> crashOn(
     InMemoryFileSource source,
     FsMethod method,
-    CrashPoint point,
-  ) async {
+    CrashPoint point, {
+    int batchSize = 1,
+  }) async {
     fs = source;
-    harness = PipelineHarness(fs);
+    harness = PipelineHarness(fs, executorBatchSize: batchSize);
     final plan = await harness.readyPlan();
     original = fs.snapshot();
     fs.crashOn(methods: {method}, point: point);
@@ -105,6 +109,55 @@ void main() {
       });
     });
   }
+
+  group('a crash in the middle of a journal batch', () {
+    // The executor journals up to 32 moves and folders as pending before
+    // running them: a crash leaves the whole batch pending.
+    for (final point in CrashPoint.values) {
+      test('${point.name} a move: each operation of the batch is judged '
+          'by the file system', () async {
+        await crashOn(
+          InMemoryFileSource()
+            ..withTypicalDownloadFolder()
+            ..withNotes(40),
+          FsMethod.move,
+          point,
+          batchSize: Executor.defaultBatchSize,
+        );
+        final before = await harness.journal.bySession(sessionId);
+        final pending = [
+          for (final op in before)
+            if (op.status == OperationStatus.pending) op,
+        ];
+        expect(pending.length, greaterThan(1), reason: 'a whole batch');
+
+        final result = await recover();
+        expect(result.recovered.map((o) => o.id), pending.map((o) => o.id));
+        final after = await harness.journal.bySession(sessionId);
+        expect(
+          after.where((o) => o.status == OperationStatus.pending),
+          isEmpty,
+        );
+        // Folders before the crashed move ran; the move per the crash
+        // point; nothing after it ran.
+        final crashed = pending.indexWhere((o) => o.type == OperationType.move);
+        for (final (i, op) in result.recovered.indexed) {
+          final expected = i < crashed
+              ? OperationStatus.done
+              : i == crashed
+              ? (point == CrashPoint.afterEffect
+                    ? OperationStatus.done
+                    : OperationStatus.skipped)
+              : OperationStatus.skipped;
+          expect(op.status, expected, reason: '#$i ${op.type.name}');
+          if (op.status == OperationStatus.skipped) {
+            expect(op.error, const InterruptedOperation());
+          }
+        }
+        await expectUndoRestoresEverything();
+      });
+    }
+  });
 
   group('iOS album', () {
     for (final point in CrashPoint.values) {

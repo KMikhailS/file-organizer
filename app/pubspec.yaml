@@ -28,6 +28,10 @@ dependencies:
   # Opens the database file in the app's private storage (stage 2,
   # section 12); lib/state/ only.
   drift_flutter: ^0.3.1
+  # The database's settings (lib/data/db/sqlite_setup.dart); already
+  # there through drift, now used directly. The repository tests use its
+  # in-memory database too.
+  sqlite3: ^3.7.0
   # Localization ru / en (docs/stage2_android.md, sections 8 and 12):
   # gen-l10n code in lib/l10n/ and texts in lib/ui/. Both come with the
   # Flutter SDK, which pins the intl version.
@@ -42,8 +46,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
-  # In-memory SQLite for the drift repository tests.
-  sqlite3: ^3.7.0
   # Dart <-> Kotlin contract generation (docs/architecture.md; pigeons/).
   pigeon: ^29.0.7
   # Tests on Android emulators (integration_test/).

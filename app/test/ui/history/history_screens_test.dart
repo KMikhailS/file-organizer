@@ -120,7 +120,11 @@ void main() {
     ) async {
       await interruptAndRestart(tester);
       expect(find.text('The last cleanup was interrupted'), findsOneWidget);
-      expect(find.text('1 operation sorted out'), findsOneWidget);
+      // The whole journal batch of the crash was sorted out (5.27).
+      expect(
+        find.textContaining(RegExp(r'^\d+ operations? sorted out$')),
+        findsOneWidget,
+      );
       expect(find.textContaining('Needs attention'), findsOneWidget);
       final path = tester.widget<Text>(find.text('Download/notes.txt'));
       expect(path.style?.color, isNotNull);

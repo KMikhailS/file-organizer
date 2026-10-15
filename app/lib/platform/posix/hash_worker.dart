@@ -9,6 +9,7 @@ import 'package:file_organizer/core/ports/cancel_token.dart';
 import 'package:file_organizer/core/ports/file_error.dart';
 import 'package:file_organizer/core/ports/file_result.dart';
 import 'package:file_organizer/platform/posix/errno_kind.dart';
+import 'package:meta/meta.dart';
 
 /// Size of each end of a file covered by the partial hash.
 const int partialHashChunk = 64 * 1024;
@@ -28,11 +29,18 @@ const int partialHashChunk = 64 * 1024;
 /// The worker starts on the first call. [dispose] stops it; later calls fail
 /// with `ioError`.
 final class HashWorker {
-  HashWorker({this.blockSize = 1024 * 1024}) {
+  HashWorker({
+    this.blockSize = 1024 * 1024,
+    @visibleForTesting this.reportsStaleSize = false,
+  }) {
     if (blockSize < 1) {
       throw ArgumentError.value(blockSize, 'blockSize', 'must be positive');
     }
   }
+
+  /// For tests: act as a file system that reports size 0 for every file
+  /// (the stale size of the phone's FUSE layer).
+  final bool reportsStaleSize;
 
   /// Bytes read per block of the full hash.
   final int blockSize;
@@ -84,6 +92,7 @@ final class HashWorker {
         partial: partial,
         blockSize: blockSize,
         stepwise: onBlock != null,
+        staleSize: reportsStaleSize,
       ),
     );
     if (cancel != null) {
@@ -225,6 +234,7 @@ final class _HashRequest {
     required this.partial,
     required this.blockSize,
     required this.stepwise,
+    required this.staleSize,
   });
 
   final int id;
@@ -234,6 +244,9 @@ final class _HashRequest {
 
   /// Whether the worker reports each block and waits for [_Continue].
   final bool stepwise;
+
+  /// For tests: take the size as 0, whatever the file system says.
+  final bool staleSize;
 }
 
 final class _CancelRequest {
@@ -327,7 +340,12 @@ Future<FileResult<String>> _hashFile(
   RandomAccessFile? file;
   try {
     file = await File(request.path).open();
-    final length = await file.length();
+    var length = request.staleSize ? 0 : await file.length();
+    if (request.partial && length == 0) {
+      // A stale size of the storage's FUSE layer (docs/stage2_android.md,
+      // 5.26): the size goes into the partial hash, so count the bytes.
+      length = await _countBytes(file, request.blockSize);
+    }
     final digest = _DigestSink();
     final input = sha256.startChunkedConversion(digest);
     if (request.partial) {
@@ -374,6 +392,21 @@ Future<FileResult<String>> _hashFile(
   } finally {
     await file?.close();
   }
+}
+
+/// The number of bytes [file] holds, by reading it; leaves the position at
+/// the start.
+Future<int> _countBytes(RandomAccessFile file, int blockSize) async {
+  var length = 0;
+  for (;;) {
+    final read = (await file.read(blockSize)).length;
+    if (read == 0) {
+      break;
+    }
+    length += read;
+  }
+  await file.setPosition(0);
+  return length;
 }
 
 /// Receives the single [Digest] of a chunked conversion.

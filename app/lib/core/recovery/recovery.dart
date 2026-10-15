@@ -50,9 +50,10 @@ final class RecoveryResult {
 
 /// Brings the journal in line with reality after a crash.
 ///
-/// A session left running has at most a few pending operations: each was
-/// journaled but its result was not. Each is checked against the file
-/// system:
+/// A session left running has pending operations: the journal batch the
+/// crash happened in (up to 32: done before the crash, interrupted, not
+/// started yet), journaled but without results. Each is checked against
+/// the file system:
 ///
 /// | Operation | Check → status |
 /// |---|---|

@@ -316,6 +316,92 @@ void operationJournalContract(Future<OperationJournal> Function() create) {
     planned: planned ?? plannedMove('a$seq.pdf', 'Documents/a$seq.pdf'),
   );
 
+  group('batches', () {
+    test(
+      'appendAll records every operation, updateAll replaces them',
+      () async {
+        final ops = [for (var i = 0; i < 3; i++) pending('o$i', seq: i)];
+        await journal.appendAll(ops);
+        expect(await journal.bySession(s1), ops);
+        final done = [for (final op in ops) op.markDone(at: at)];
+        await journal.updateAll(done);
+        expect(await journal.bySession(s1), done);
+      },
+    );
+
+    test('an empty batch changes nothing', () async {
+      await journal.appendAll(const []);
+      await journal.updateAll(const []);
+      expect(await journal.bySession(s1), isEmpty);
+    });
+
+    test('appendAll records all or none', () async {
+      await journal.append(pending('taken', seq: 5));
+      final bad = <String, List<Operation>>{
+        'not pending': [pending('a'), pending('b', seq: 1).markDone(at: at)],
+        'id already stored': [pending('a'), pending('taken', seq: 1)],
+        'seq already taken': [pending('a'), pending('b', seq: 5)],
+        'same id twice': [pending('a'), pending('a', seq: 1)],
+        'same seq twice': [pending('a'), pending('b')],
+      };
+      for (final MapEntry(key: why, value: batch) in bad.entries) {
+        await expectLater(
+          journal.appendAll(batch),
+          throwsStateError,
+          reason: why,
+        );
+        expect(
+          [for (final o in await journal.bySession(s1)) o.id.value],
+          ['taken'],
+          reason: '$why: nothing of the batch is recorded',
+        );
+      }
+    });
+
+    test('updateAll replaces all or none', () async {
+      final ops = [for (var i = 0; i < 3; i++) pending('o$i', seq: i)];
+      await journal.appendAll(ops);
+      final bad = <String, List<Operation>>{
+        'unknown operation': [
+          ops[0].markDone(at: at),
+          pending('nope', seq: 9).markDone(at: at),
+        ],
+        'forbidden transition': [
+          ops[0].markDone(at: at),
+          ops[1].markDone(at: at).markReverted(at: later),
+        ],
+        'same operation twice': [
+          ops[0].markDone(at: at),
+          ops[0].markSkipped(at: at, error: const FileGone()),
+        ],
+      };
+      // Each change allowed on its own (done → revertSkipped →
+      // revertSkipped), yet one operation twice in one batch.
+      await journal.update(ops[2].markDone(at: at));
+      final done = (await journal.byId(ops[2].id))!;
+      final skipped = done.markRevertSkipped(
+        error: const NotWhereCleanupPutIt(),
+      );
+      bad['same operation twice, each change allowed'] = [
+        skipped,
+        skipped.markRevertSkipped(error: const FileChanged()),
+      ];
+      ops[2] = done;
+      for (final MapEntry(key: why, value: batch) in bad.entries) {
+        await expectLater(
+          journal.updateAll(batch),
+          throwsStateError,
+          reason: why,
+        );
+        expect(
+          await journal.bySession(s1),
+          ops,
+          reason: '$why: nothing of the batch is replaced',
+        );
+      }
+    });
+  });
+
   test('appends and finds every field', () async {
     final op = pending('o1', planned: plannedQuarantine('x (1).pdf'));
     await journal.append(op);

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:file_organizer/core/dedupe/dedupe.dart';
 import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/ports/ports.dart';
@@ -406,6 +408,118 @@ void main() {
         ['big1', 'big2'],
       ],
     );
+  });
+
+  group('several files at a time', () {
+    /// Ten files of one size (five pairs), hashed with [concurrency];
+    /// records how many hash calls run at the same time.
+    Future<(List<DedupeEvent>, int)> run(
+      int concurrency, {
+      void Function(InMemoryFileSource fs)? before,
+      CancelToken? cancel,
+      void Function(LogicalPath path)? onHash,
+    }) async {
+      final fs = InMemoryFileSource();
+      for (var i = 0; i < 10; i++) {
+        fs.addFile('f$i', text: 'pair ${i ~/ 2}');
+      }
+      final zones = await scanned(fs);
+      before?.call(fs);
+      var inFlight = 0;
+      var most = 0;
+      fs.beforeCall = (call) async {
+        if (call.method != FsMethod.fullHash) {
+          return;
+        }
+        onHash?.call(call.path!);
+        inFlight++;
+        most = math.max(most, inFlight);
+        // Let the other calls start before this one ends.
+        await Future<void>.delayed(const Duration(milliseconds: 1));
+        inFlight--;
+      };
+      final events = await DuplicateFinder(
+        index: index,
+        hashConcurrency: concurrency,
+      ).find(fs, zones, cancel: cancel).toList();
+      expect(inFlight, 0, reason: 'nothing runs on after the search');
+      return (events, most);
+    }
+
+    test('at most hashConcurrency files at the same time', () async {
+      expect((await run(4)).$2, 4);
+      index = InMemoryFileIndexRepository();
+      expect((await run(1)).$2, 1);
+    });
+
+    test('the same result as one at a time, also with files that cannot '
+        'be hashed', () async {
+      void faults(InMemoryFileSource fs) => fs
+        ..lock('f3')
+        ..removeExternally('f6');
+      final (one, _) = await run(1, before: faults);
+      index = InMemoryFileIndexRepository();
+      final (four, _) = await run(4, before: faults);
+      expect(four, one);
+      final done = four.last as DedupeCompleted;
+      expect(done.skipped.map((s) => s.path.value), ['f3', 'f6']);
+      expect(pathsOf(done), [
+        ['f0', 'f1'],
+        ['f4', 'f5'],
+        ['f8', 'f9'],
+      ]);
+    });
+
+    test('after a cancel no file is started and none is left '
+        'running', () async {
+      final token = CancelToken();
+      final started = <String>[];
+      final (events, _) = await run(
+        4,
+        cancel: token,
+        onHash: (path) {
+          started.add(path.value);
+          if (path.value == 'f1') {
+            token.cancel();
+          }
+        },
+      );
+      expect(events.whereType<DedupeCompleted>(), isEmpty);
+      // The cancel came while f1 was requested: f2 and on never start.
+      expect(started, ['f0', 'f1']);
+    });
+
+    test('a cancel while the last block of a file is read: that file '
+        'is done, the next one never starts', () async {
+      final fs = InMemoryFileSource()
+        ..addFile('a1', text: 'a')
+        ..addFile('a2', text: 'a');
+      final zones = await scanned(fs);
+      final token = CancelToken();
+      // After the only block of a1: a1 still succeeds, a2 is not requested.
+      fs.onHashBlock = (path, _) => token.cancel();
+      final events = await DuplicateFinder(
+        index: index,
+        hashConcurrency: 1,
+      ).find(fs, zones, cancel: token).toList();
+      expect(events.whereType<DedupeCompleted>(), isEmpty);
+      expect(hashCalls(fs, FsMethod.fullHash), ['a1']);
+      expect(
+        [
+          for (final e in await index.bySource(fs.sourceId))
+            if (e.fullHash != null) e.path.value,
+        ],
+        ['a1'],
+        reason: 'the hash of a1 is kept',
+      );
+    });
+
+    test('a concurrency below one is refused', () {
+      expect(
+        () => DuplicateFinder(index: index, hashConcurrency: 0),
+        throwsArgumentError,
+      );
+    });
   });
 
   test('the result is deterministic', () async {

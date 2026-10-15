@@ -5,7 +5,7 @@
 /// directories of the app (see `docs/stage2_android.md`, section 11):
 ///
 /// - `core` is pure Dart: SDK without `dart:io`, pure packages, itself;
-/// - `data` adds drift; `platform` adds `dart:io`, `dart:ffi`,
+/// - `data` adds drift and its engine sqlite3; `platform` adds `dart:io`, `dart:ffi`,
 ///   `dart:isolate` and the Pigeon runtime; both see only `core`;
 /// - `state` wires `core`, `data` and `platform` with Riverpod;
 /// - `ui` sees `core/model`, `state` and `l10n`, never `data` or `platform`.
@@ -98,7 +98,9 @@ const Layer dataLayer = Layer(
   name: 'data',
   root: 'lib/data/',
   dartLibraries: pureDartLibraries,
-  packages: {...purePackages, 'drift'},
+  // sqlite3: the engine under drift, for the connection's settings
+  // (lib/data/db/sqlite_setup.dart, docs/stage2_android.md 5.27).
+  packages: {...purePackages, 'drift', 'sqlite3'},
   appDirs: ['lib/data/', coreDir],
   // drift code generation (`part 'app_database.g.dart'`).
   generatedCode: true,

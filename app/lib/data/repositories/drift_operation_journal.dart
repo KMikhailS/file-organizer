@@ -15,35 +15,56 @@ final class DriftOperationJournal implements OperationJournal {
   $OperationsTable get _t => _db.operations;
 
   @override
-  Future<void> append(Operation operation) => _db.transaction(() async {
-    RepositoryRules.checkAppend(operation);
-    if (await byId(operation.id) != null) {
-      throw StateError('Journal: ${operation.id} already exists');
-    }
-    final sameSeq =
-        await (_db.select(_t)..where(
-              (t) =>
-                  t.sessionId.equals(operation.sessionId.value) &
-                  t.seq.equals(operation.seq),
-            ))
-            .getSingleOrNull();
-    if (sameSeq != null) {
-      throw StateError(
-        'Journal: seq ${operation.seq} is taken in ${operation.sessionId}',
-      );
-    }
-    await _db.into(_t).insert(_toRow(operation));
-  });
+  Future<void> append(Operation operation) => appendAll([operation]);
 
   @override
-  Future<void> update(Operation operation) => _db.transaction(() async {
-    final stored = await byId(operation.id);
-    if (stored == null) {
-      throw StateError('Journal: ${operation.id} does not exist');
-    }
-    RepositoryRules.checkUpdate(stored, operation);
-    await _db.update(_t).replace(_toRow(operation));
-  });
+  Future<void> update(Operation operation) => updateAll([operation]);
+
+  @override
+  Future<void> appendAll(List<Operation> operations) =>
+      _db.transaction(() async {
+        // A rule broken by any operation throws and rolls back the rest.
+        // Each one is inserted before the next is checked, so a repeated id
+        // or seq within the batch is found like a stored one.
+        for (final operation in operations) {
+          RepositoryRules.checkAppend(operation);
+          if (await byId(operation.id) != null) {
+            throw StateError('Journal: ${operation.id} already exists');
+          }
+          final sameSeq =
+              await (_db.select(_t)..where(
+                    (t) =>
+                        t.sessionId.equals(operation.sessionId.value) &
+                        t.seq.equals(operation.seq),
+                  ))
+                  .getSingleOrNull();
+          if (sameSeq != null) {
+            throw StateError(
+              'Journal: seq ${operation.seq} is taken in '
+              '${operation.sessionId}',
+            );
+          }
+          await _db.into(_t).insert(_toRow(operation));
+        }
+      });
+
+  @override
+  Future<void> updateAll(List<Operation> operations) => _db.transaction(
+    () async {
+      final ids = <OperationId>{};
+      for (final operation in operations) {
+        if (!ids.add(operation.id)) {
+          throw StateError('Journal: ${operation.id} is updated twice at once');
+        }
+        final stored = await byId(operation.id);
+        if (stored == null) {
+          throw StateError('Journal: ${operation.id} does not exist');
+        }
+        RepositoryRules.checkUpdate(stored, operation);
+        await _db.update(_t).replace(_toRow(operation));
+      }
+    },
+  );
 
   @override
   Future<Operation?> byId(OperationId id) async {

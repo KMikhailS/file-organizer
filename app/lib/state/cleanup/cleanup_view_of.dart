@@ -3,6 +3,7 @@ import 'package:file_organizer/core/classify/rule_classifier.dart';
 import 'package:file_organizer/core/model/category.dart';
 import 'package:file_organizer/core/model/logical_path.dart';
 import 'package:file_organizer/core/model/operation.dart';
+import 'package:file_organizer/core/model/operation_problem.dart';
 import 'package:file_organizer/core/model/operation_type.dart';
 import 'package:file_organizer/core/model/session_stats.dart';
 import 'package:file_organizer/core/planner/planner.dart';
@@ -202,10 +203,16 @@ SessionStats addUp(Iterable<SessionStats> all) {
 /// The problems among [operations] (an error that is still current:
 /// failed, skipped, or not undone), "needs attention" first, otherwise in
 /// order.
+///
+/// An operation a crash stopped before it took effect is no problem: its
+/// file is where it was, and finishing the cleanup plans it again. A crash
+/// leaves a whole journal batch of them (`docs/stage2_android.md`, 5.27).
 List<ProblemView> problemsOf(Iterable<Operation> operations) {
   final problems = [
     for (final op in operations)
-      if (op.status.hasError && op.error != null)
+      if (op.status.hasError &&
+          op.error != null &&
+          op.error is! InterruptedOperation)
         ProblemView(
           type: op.type,
           path: op.fromPath ?? op.toPath!,

@@ -2,8 +2,10 @@ import 'package:file_organizer/core/model/model.dart';
 import 'package:file_organizer/core/undo/undo.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../support/fake_clock.dart';
 import '../../support/fs/in_memory_file_source.dart';
 import '../../support/pipeline_harness.dart';
+import '../../support/repositories/in_memory_repositories.dart';
 import '../../support/scenarios.dart';
 
 void main() {
@@ -370,6 +372,121 @@ void main() {
       final rest = await undo();
       expect(rest.session.status, SessionStatus.reverted);
       expect(original.diff(fs.snapshot()), isEmpty);
+    });
+  });
+
+  group('journal batches', () {
+    test('results are journaled per batch and when the undo stops', () async {
+      fs = InMemoryFileSource()
+        ..withTypicalDownloadFolder()
+        ..withNotes(40);
+      harness = PipelineHarness(fs, undoBatchSize: 8);
+      original = fs.snapshot();
+      session = await harness.execute(await harness.readyPlan());
+      final writes = harness.journal.writes.length;
+
+      final run = harness.undoService.start(fs, session.id);
+      var seen = 0;
+      final journaledAt = <int, int>{};
+      run.progress.listen((_) {
+        seen++;
+        // What the journal holds when entry 9 and 17 come: the batches
+        // before them are written already, nothing of the current one.
+        if (seen == 9 || seen == 17) {
+          journaledAt[seen] = harness.journal.writes.length - writes;
+        }
+        if (seen == 20) {
+          run.cancel();
+        }
+      });
+      final result = await run.result;
+      expect(result.entries, hasLength(20));
+      expect(journaledAt, {9: 8, 17: 16});
+      final written = harness.journal.writes.skip(writes).toList();
+      expect(written, hasLength(20), reason: '2 batches of 8, then 4 on stop');
+      expect(
+        written.map((o) => o.status),
+        everyElement(OperationStatus.reverted),
+      );
+
+      await undo();
+      expect(original.diff(fs.snapshot()), isEmpty);
+    });
+
+    test('after a crash, files already back count as reverted', () async {
+      await cleanUp(InMemoryFileSource()..withTypicalDownloadFolder());
+      fs.crashOn(
+        methods: {FsMethod.move},
+        nth: 4,
+        point: CrashPoint.afterEffect,
+      );
+      await expectLater(undo(), throwsA(isA<SimulatedCrash>()));
+      fs.clearFaults();
+      expect(
+        (await harness.operations(session.id)).map((o) => o.status),
+        everyElement(OperationStatus.done),
+        reason: 'nothing journaled yet, though four files are back',
+      );
+
+      final result = await undo();
+      expect(result.session.status, SessionStatus.reverted);
+      expect(
+        result.entries.map((e) => e.operation.status),
+        everyElement(OperationStatus.reverted),
+      );
+      expect(original.diff(fs.snapshot()), isEmpty);
+    });
+
+    test('a file restored from the quarantine is recognized by its '
+        'content', () async {
+      await cleanUp(InMemoryFileSource()..withTypicalDownloadFolder());
+      final copy = await op('Download/invoice_2024 (1).pdf');
+      expect(copy.type, OperationType.quarantine);
+      fs.crashOn(methods: {FsMethod.restore}, point: CrashPoint.afterEffect);
+      await expectLater(undo(), throwsA(isA<SimulatedCrash>()));
+      fs.clearFaults();
+      expect(fs.isFile('Download/invoice_2024 (1).pdf'), isTrue);
+
+      await undo();
+      expect(
+        (await op('Download/invoice_2024 (1).pdf')).status,
+        OperationStatus.reverted,
+      );
+      expect(original.diff(fs.snapshot()), isEmpty);
+    });
+
+    test('a file at the original place with other content is not taken '
+        'for the restored one', () async {
+      await cleanUp(InMemoryFileSource()..withTypicalDownloadFolder());
+      final copy = await op('Download/invoice_2024 (1).pdf');
+      fs.crashOn(methods: {FsMethod.restore}, point: CrashPoint.afterEffect);
+      await expectLater(undo(), throwsA(isA<SimulatedCrash>()));
+      fs.clearFaults();
+      // Same size and time, different content.
+      final bytes = fs.readBytes('Download/invoice_2024 (1).pdf');
+      fs.writeFile(
+        'Download/invoice_2024 (1).pdf',
+        bytes: [bytes.first ^ 1, ...bytes.skip(1)],
+        modifiedAt: copy.fingerprint!.modifiedAt,
+      );
+
+      await undo();
+      final after = await op('Download/invoice_2024 (1).pdf');
+      expect(after.status, OperationStatus.revertSkipped);
+      expect(after.error, const QuarantinePurged());
+    });
+
+    test('a batch size below one is refused', () {
+      expect(
+        () => UndoService(
+          journal: InMemoryOperationJournal(),
+          sessions: InMemorySessionRepository(),
+          clock: FakeClock(),
+          restoredLabel: 'restored',
+          batchSize: 0,
+        ),
+        throwsArgumentError,
+      );
     });
   });
 

@@ -56,6 +56,13 @@ final class UndoRun {
 /// When the undo is not possible (file missing or changed, quarantine
 /// purged, folder not empty), the operation is marked revertSkipped with
 /// the reason and the rest goes on.
+///
+/// Results are journaled in batches of [batchSize] (`docs/stage2_android.md`,
+/// 5.27), and the rest when the undo stops. So a crash can leave a batch of
+/// files back in place while the journal still calls them done; a later undo
+/// takes such a file as reverted when it is at its original place, unchanged
+/// (a moved file: the same size and modification time; a quarantined one:
+/// the same content).
 final class UndoService {
   /// [restoredLabel] comes from the app's localization, like the template
   /// folder names: a file whose place is taken comes back as
@@ -65,7 +72,11 @@ final class UndoService {
     required this._sessions,
     required this._clock,
     required this.restoredLabel,
+    this.batchSize = defaultBatchSize,
   }) {
+    if (batchSize < 1) {
+      throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+    }
     if (restoredLabel.isEmpty ||
         restoredLabel.contains('/') ||
         restoredLabel.contains('\u0000')) {
@@ -78,6 +89,12 @@ final class UndoService {
   final Clock _clock;
 
   final String restoredLabel;
+
+  /// Results per journal write, as in the executor.
+  static const int defaultBatchSize = 32;
+
+  /// Results per journal write at most.
+  final int batchSize;
 
   /// Gives up looking for a free "restored" name after this many tries.
   static const int maxRestoredSuffix = 1000;
@@ -148,6 +165,7 @@ final class UndoService {
     };
 
     final entries = <UndoEntry>[];
+    final unsaved = <Operation>[];
     for (final op in inScope) {
       if (cancel.requested) {
         break;
@@ -160,10 +178,16 @@ final class UndoService {
         throw StateError('Session $sessionId needs its source to be undone');
       }
       final entry = await _revert(source, op);
-      await _journal.update(entry.operation);
+      unsaved.add(entry.operation);
+      if (unsaved.length >= batchSize) {
+        await _journal.updateAll(unsaved);
+        unsaved.clear();
+      }
       entries.add(entry);
       progress.add(entry);
     }
+    // Not in a `finally`: after a crash nothing more reaches the journal.
+    await _journal.updateAll(unsaved);
 
     if (session.status == SessionStatus.reverted) {
       return UndoResult(session, entries);
@@ -208,6 +232,10 @@ final class UndoService {
       case OperationType.move:
         final at = op.toPath!;
         final problem = await _checkMoved(source, op, at);
+        if (problem is NotWhereCleanupPutIt &&
+            await _isBack(source, op, compareContent: false)) {
+          return _reverted(op);
+        }
         if (problem != null) {
           return _skip(op, problem);
         }
@@ -240,15 +268,47 @@ final class UndoService {
         }
         return switch (await source.restore(ref, destination)) {
           FileSuccess() => _reverted(op, destination),
-          FileFailure(error: FileError(kind: FileErrorKind.notFound)) => _skip(
-            op,
-            const QuarantinePurged(),
-          ),
+          FileFailure(error: FileError(kind: FileErrorKind.notFound)) =>
+            await _isBack(source, op, compareContent: true)
+                ? _reverted(op)
+                : _skip(op, const QuarantinePurged()),
           FileFailure(error: FileError(kind: FileErrorKind.unsupported)) =>
             _skip(op, const CannotRestore()),
           FileFailure(:final error) => _skip(op, _problem(error)),
         };
     }
+  }
+
+  /// Whether the file of [op] is at its original place already, unchanged:
+  /// the same size and modification time and, with [compareContent] and a
+  /// known hash, the same content. An undo interrupted before its results
+  /// were journaled leaves such files.
+  Future<bool> _isBack(
+    FileSource source,
+    Operation op, {
+    required bool compareContent,
+  }) async {
+    final expected = op.fingerprint;
+    if (expected == null) {
+      return false;
+    }
+    switch (await source.stat(op.fromPath!)) {
+      case FileSuccess(value: final stat)
+          when stat.isFile &&
+              stat.size == expected.size &&
+              stat.modifiedAt == expected.modifiedAt:
+        break;
+      case _:
+        return false;
+    }
+    final hash = expected.fullHash;
+    if (!compareContent || hash == null) {
+      return !compareContent;
+    }
+    return switch (await source.fullHash(op.fromPath!)) {
+      FileSuccess(:final value) => value == hash,
+      FileFailure() => false,
+    };
   }
 
   /// Why the moved file cannot be moved back, or `null`.

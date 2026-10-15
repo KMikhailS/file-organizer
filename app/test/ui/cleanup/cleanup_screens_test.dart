@@ -188,9 +188,15 @@ void main() {
     expect(files.isFile('Documents/Old/receipt copy.pdf'), isTrue);
   });
 
-  testWidgets('cancel while tidying up: stops after the current operation', (
-    tester,
-  ) async {
+  testWidgets('cancel while tidying up: stops at the end of the current '
+      'batch', (tester) async {
+    // More than one journal batch (32 moves), so a part stays undone.
+    device = FakeDevice(
+      files: (source) => files = InMemoryFileSource(sourceId: source.id)
+        ..withTypicalDownloadFolder()
+        ..withNotes(80),
+    )..access.allFiles = true;
+    await device.fixFolderNames();
     await openPlan(tester);
     final gate = holdAt(FsMethod.move);
     await tester.tapText('Apply');
@@ -215,7 +221,13 @@ void main() {
     expect(find.text('Undo the cleanup'), findsOneWidget);
     await tester.tapText('Close');
     expect(find.text('Stopped'), findsOneWidget);
-    expect(files.isFile('Download/notes.txt'), isTrue);
+    expect(
+      [
+        for (var i = 1; i <= 80; i++) i,
+      ].where((i) => files.isFile('Download/note_${'$i'.padLeft(4, '0')}.txt')),
+      isNotEmpty,
+      reason: 'later batches were not started',
+    );
   });
 
   testWidgets('cancel while looking for duplicates: back home, nothing '

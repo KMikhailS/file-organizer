@@ -18,6 +18,18 @@ abstract interface class OperationJournal {
   /// transition (see [OperationStatus]).
   Future<void> update(Operation operation);
 
+  /// Records several new operations in one write, atomically: if any of
+  /// them breaks a rule of [append] (also against another one of the same
+  /// call), none is recorded. The executor journals a batch of operations
+  /// as pending before executing any of them (`docs/stage2_android.md`,
+  /// 5.27).
+  Future<void> appendAll(List<Operation> operations);
+
+  /// Replaces several stored operations in one write, atomically: if any
+  /// of them breaks a rule of [update] (or appears twice), none is
+  /// replaced.
+  Future<void> updateAll(List<Operation> operations);
+
   Future<Operation?> byId(OperationId id);
 
   /// Operations of a session ordered by `seq` (descending if [reverse]),

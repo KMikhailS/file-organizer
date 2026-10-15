@@ -220,9 +220,12 @@ void main() {
       expect(files.isFile('Documents/notes.txt'), isTrue);
     });
 
-    test('needs attention comes before an ordinary failure', () async {
-      // Archives are moved before Documents: this failure comes first in
-      // the journal.
+    test('a failure in the batch of the crash is judged again: the file '
+        'is where it was', () async {
+      // backup.zip fails in the same journal batch as the crash: its
+      // result was not journaled yet, so recovery finds it unmoved
+      // (interrupted before it took effect, no problem; finishing the
+      // cleanup tries it again).
       files.failOn(
         FileErrorKind.locked,
         methods: {FsMethod.move},
@@ -233,12 +236,9 @@ void main() {
       final problems = await app.read(
         sessionProblemsProvider(session.id).future,
       );
-      expect(
-        [for (final p in problems) p.path.value],
-        ['Download/notes.txt', 'Download/backup.zip'],
-      );
-      expect(problems.first.needsAttention, isTrue);
-      expect(problems.last.needsAttention, isFalse);
+      expect([for (final p in problems) p.path.value], ['Download/notes.txt']);
+      expect(problems.single.needsAttention, isTrue);
+      expect(files.isFile('Download/backup.zip'), isTrue);
     });
 
     test('a file lost meanwhile needs attention, and comes first', () async {

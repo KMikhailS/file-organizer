@@ -132,6 +132,16 @@ extension Scenarios on InMemoryFileSource {
       );
   }
 
+  /// [count] small text notes `note_0001.txt`… in `Download` (each with
+  /// its own content): a cleanup long enough for several journal batches.
+  InMemoryFileSource withNotes(int count, {String root = 'Download'}) {
+    for (var i = 1; i <= count; i++) {
+      final name = 'note_${'$i'.padLeft(4, '0')}.txt';
+      addFile(root.isEmpty ? name : '$root/$name', text: 'note $i');
+    }
+    return this;
+  }
+
   /// A folder the user organized: `Documents` with topic and year
   /// subfolders, all documents. Must never be touched.
   InMemoryFileSource withOrganizedDocumentArchive({String root = 'Documents'}) {

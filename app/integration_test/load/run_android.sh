@@ -3,7 +3,8 @@
 # or emulator, on the TEST ROOT only:
 #   integration_test/load/run_android.sh <adb-serial>
 #
-# Writes FILES (default 50000) small files into
+# Writes FILES (default 20000; the user's decision of 2026-10-15 — 50 000
+# took about an hour on the phone) small files into
 # /storage/emulated/0/FileOrganizerTest: 40% in Download/, 20% in Telegram
 # and 20% in WhatsApp (cleaned), 20% in DCIM/Camera (the user's own);
 # every 25th file repeats the one before (a duplicate). The app takes that
@@ -19,7 +20,7 @@ ROOT=/storage/emulated/0/FileOrganizerTest
 SDK=${ANDROID_HOME:-$HOME/development/android-sdk}
 ADB=("$SDK/platform-tools/adb" -s "$SERIAL")
 FLUTTER=${FLUTTER:-$HOME/development/flutter/bin/flutter}
-FILES=${FILES:-50000}
+FILES=${FILES:-20000}
 LOG=build/load_test.log
 OUT=build/load_$SERIAL.txt
 

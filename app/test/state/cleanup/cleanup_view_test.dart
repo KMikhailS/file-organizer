@@ -68,6 +68,51 @@ void main() {
     return view() as PlanReview;
   }
 
+  group('problemsOf', () {
+    final at = DateTime.utc(2024);
+    var seq = 0;
+    Operation pending(String from) => Operation.pending(
+      id: OperationId(from),
+      sessionId: const SessionId('s'),
+      seq: seq++,
+      planned: PlannedOperation.move(
+        sourceId: const SourceId('src'),
+        from: LogicalPath(from),
+        to: LogicalPath('Documents/$from'),
+        fingerprint: Fingerprint(size: 1, modifiedAt: at),
+        reason: const Classified(ByExtension('txt')),
+        groupKey: 'g',
+        approved: true,
+      ),
+    );
+
+    test('needs attention first, the rest in order', () {
+      final problems = problemsOf([
+        pending('a.txt').markFailed(at: at, error: const FileGone()),
+        pending('b.txt').markDone(at: at),
+        pending('c.txt').markSkipped(
+          at: at,
+          error: const NeedsAttention(AttentionCause.fileLost),
+        ),
+        pending('d.txt').markSkipped(at: at, error: const FileChanged()),
+      ]);
+      expect(
+        [for (final p in problems) p.path.value],
+        ['c.txt', 'a.txt', 'd.txt'],
+      );
+    });
+
+    test('an operation stopped before it took effect is no problem', () {
+      // A crash leaves a whole journal batch of them (5.27).
+      final problems = problemsOf([
+        pending('a.txt')
+            .markSkipped(at: at, error: const InterruptedOperation()),
+        pending('b.txt').markSkipped(at: at, error: const FileChanged()),
+      ]);
+      expect([for (final p in problems) p.path.value], ['b.txt']);
+    });
+  });
+
   test('idle is at home', () {
     expect(view(), isA<AtHome>());
     expect(cleanupViewOf(null), isA<AtHome>());

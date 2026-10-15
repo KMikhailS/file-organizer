@@ -39,14 +39,23 @@ final class ExecutionRun {
   /// cancelling a subscription does not stop it, [cancel] does.
   Stream<ExecutionProgress> get progress => _progress.stream;
 
-  /// Stops after the current operation; the session becomes cancelled.
+  /// Stops after the current batch (see [Executor]); the session becomes
+  /// cancelled.
   void cancel() => _cancel.requested = true;
 }
 
 /// Executes the approved operations of a plan, safely and with a journal.
 ///
-/// For each operation, in plan order:
-/// 1. it is written to the journal as pending;
+/// Operations run in plan order, in batches: up to [batchSize] moves and
+/// folders, or a single quarantine or album operation (those hash files
+/// again, which can take long). A batch is journaled as pending in one
+/// write before any of its operations runs, and their results in one write
+/// after the last (`docs/stage2_android.md`, 5.27). A crash in the middle
+/// leaves the whole batch pending; `Recovery` checks each against the file
+/// system. A cancel takes effect between batches.
+///
+/// For each operation:
+/// 1. it is written to the journal as pending (with its batch);
 /// 2. it is skipped if it depends on a folder that could not be created;
 /// 3. the file is checked: a moved file must still have the size and
 ///    modification time it had at scan time; a duplicate must still be one —
@@ -64,7 +73,19 @@ final class Executor {
     required this._sessions,
     required this._clock,
     required this._ids,
-  });
+    this.batchSize = defaultBatchSize,
+  }) {
+    if (batchSize < 1) {
+      throw ArgumentError.value(batchSize, 'batchSize', 'must be positive');
+    }
+  }
+
+  /// Moves and folders per batch: the journal costs two writes per batch
+  /// instead of two per operation (on a phone a write takes milliseconds).
+  static const int defaultBatchSize = 32;
+
+  /// Moves and folders per batch at most.
+  final int batchSize;
 
   final OperationJournal _journal;
   final SessionRepository _sessions;
@@ -124,46 +145,68 @@ final class Executor {
     var skipped = 0;
     var failed = 0;
 
-    for (var seq = 0; seq < operations.length && !cancel.requested; seq++) {
-      final pending = Operation.pending(
-        id: OperationId(_ids.newId()),
-        sessionId: sessionId,
-        seq: seq,
-        planned: operations[seq],
-      );
-      await _journal.append(pending);
-      final (finished, blocksFolder) = await _perform(pending, context);
-      await _journal.update(finished);
+    var seq = 0;
+    while (seq < operations.length && !cancel.requested) {
+      final batch = <Operation>[];
+      while (seq < operations.length && batch.length < batchSize) {
+        final planned = operations[seq];
+        final alone =
+            planned.type == OperationType.quarantine ||
+            planned.type == OperationType.addToAlbum;
+        if (alone && batch.isNotEmpty) {
+          break;
+        }
+        batch.add(
+          Operation.pending(
+            id: OperationId(_ids.newId()),
+            sessionId: sessionId,
+            seq: seq,
+            planned: planned,
+          ),
+        );
+        seq++;
+        if (alone) {
+          break;
+        }
+      }
+      await _journal.appendAll(batch);
 
-      switch (finished.status) {
-        case OperationStatus.done:
-          done++;
-          if (finished.type == OperationType.move) {
-            context.movedTo[finished.fromPath!] = finished.toPath!;
-          }
-        case OperationStatus.skipped:
-          skipped++;
-        case OperationStatus.failed:
-          failed++;
-        case OperationStatus.pending ||
-            OperationStatus.reverted ||
-            OperationStatus.revertSkipped:
-          throw StateError('unexpected status ${finished.status}');
+      final results = <Operation>[];
+      for (final pending in batch) {
+        final (finished, blocksFolder) = await _perform(pending, context);
+        results.add(finished);
+
+        switch (finished.status) {
+          case OperationStatus.done:
+            done++;
+            if (finished.type == OperationType.move) {
+              context.movedTo[finished.fromPath!] = finished.toPath!;
+            }
+          case OperationStatus.skipped:
+            skipped++;
+          case OperationStatus.failed:
+            failed++;
+          case OperationStatus.pending ||
+              OperationStatus.reverted ||
+              OperationStatus.revertSkipped:
+            throw StateError('unexpected status ${finished.status}');
+        }
+        if (blocksFolder) {
+          context.failedFolders[finished.toPath!.value.toLowerCase()] =
+              finished.toPath!;
+        }
+        progress.add(
+          ExecutionProgress(
+            sessionId: sessionId,
+            total: operations.length,
+            done: done,
+            skipped: skipped,
+            failed: failed,
+            last: finished,
+          ),
+        );
       }
-      if (blocksFolder) {
-        context.failedFolders[finished.toPath!.value.toLowerCase()] =
-            finished.toPath!;
-      }
-      progress.add(
-        ExecutionProgress(
-          sessionId: sessionId,
-          total: operations.length,
-          done: done,
-          skipped: skipped,
-          failed: failed,
-          last: finished,
-        ),
-      );
+      await _journal.updateAll(results);
     }
 
     final stats = SessionStats.of(await _journal.bySession(sessionId));

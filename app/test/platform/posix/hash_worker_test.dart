@@ -80,6 +80,25 @@ void main() {
       }
     });
 
+    test('a size reported as 0 is counted: the partial hash stays the '
+        'same', () async {
+      // On a phone the FUSE layer reported size 0 for files just written
+      // (docs/stage2_android.md, 5.26); the size is part of the hash.
+      tree
+        ..file('empty', bytes: const [])
+        ..file('abc', text: 'abc')
+        ..file('200k', bytes: pattern(200 * 1024));
+      final stale = HashWorker(reportsStaleSize: true);
+      addTearDown(stale.dispose);
+      for (final name in ['empty', 'abc', '200k']) {
+        expect(
+          await stale.hash('${tree.root}/$name', partial: true),
+          await fs.partialHash(p(name)),
+          reason: name,
+        );
+      }
+    });
+
     test('does not depend on the block size', () async {
       tree.file('200k', bytes: pattern(200 * 1024));
       final small = await openPosix(tree.root, hashBlockSize: 7);
